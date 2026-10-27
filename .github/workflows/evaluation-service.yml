@@ -1,0 +1,21 @@
+name: evaluation-service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/evaluation/**'
+      - '.github/workflows/go-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/evaluation/**'
+      - '.github/workflows/go-ci.yml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/go-ci.yml
+    with:
+      service_dir: evaluation
+      service_name: evaluation-service
+    secrets: inherit

@@ -1,1 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+tfplan
+*.tfplan
+!example.tfvars
+
+
+# AWS / deploy artifacts
+.aws/
+.aws-sam/
+cdk.out/
+*.pem
+*.zip
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+*.key
+
+# IDE / OS
 .vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

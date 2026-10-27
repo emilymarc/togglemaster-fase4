@@ -1,0 +1,11 @@
+# Tudo LF dentro do repositorio: Docker e o CI dependem disso
+* text=auto eol=lf
+
+# Exceto o que o proprio Windows executa
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+*.pdf  binary
+*.png  binary
+*.docx binary

@@ -1,0 +1,21 @@
+name: targeting-service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/targeting/**'
+      - '.github/workflows/python-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/targeting/**'
+      - '.github/workflows/python-ci.yml'
+
+jobs:
+  ci:
+    uses: ./.github/workflows/python-ci.yml
+    with:
+      service_dir: targeting
+      service_name: targeting-service
+    secrets: inherit

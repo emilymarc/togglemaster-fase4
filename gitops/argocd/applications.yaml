@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/services/auth
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flag
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/services/flag
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: targeting
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/services/targeting
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: evaluation
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/services/evaluation
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: analytics
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/services/analytics
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: togglemaster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
