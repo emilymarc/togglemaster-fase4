@@ -1,0 +1,927 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToggleMaster — Arquitetura Fase 4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0E1116;
+    --surface: #161B22;
+    --surface2: #1C2128;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --muted: #8B949E;
+    --blue: #5B9CF6;
+    --orange: #F4845F;
+    --green: #4ADE80;
+    --yellow: #F9CA6A;
+    --purple: #C792EA;
+    --red: #FF7B72;
+    --teal: #56D4DD;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  header p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .diagram {
+    display: grid;
+    grid-template-columns: 260px 40px 300px 40px 300px;
+    grid-template-rows: auto;
+    align-items: start;
+    gap: 0;
+    max-width: 980px;
+    width: 100%;
+  }
+
+  /* ─── Column Headers ─── */
+  .col-header {
+    text-align: center;
+    padding: 8px 12px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+  }
+
+  .col-iac   { background: rgba(201,114,249,0.08); color: var(--purple); border-color: rgba(201,114,249,0.3); }
+  .col-cicd  { background: rgba(91,156,246,0.08);  color: var(--blue);   border-color: rgba(91,156,246,0.3);  }
+  .col-aws   { background: rgba(249,202,106,0.08); color: var(--yellow); border-color: rgba(249,202,106,0.3); }
+
+  /* ─── Column bodies ─── */
+  .col-body {
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--surface);
+  }
+
+  .col-iac-body  { border-color: rgba(201,114,249,0.3); }
+  .col-cicd-body { border-color: rgba(91,156,246,0.3);  }
+  .col-aws-body  { border-color: rgba(249,202,106,0.3); }
+
+  /* ─── Arrow spacers ─── */
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 70px;
+    gap: 4px;
+  }
+
+  .arrow-svg { overflow: visible; }
+
+  .arrow-label {
+    font-size: 0.58rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+    max-width: 38px;
+  }
+
+  /* ─── Blocks inside columns ─── */
+  .block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  .block-title {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .block-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.4;
+  }
+
+  .item .icon { flex-shrink: 0; font-style: normal; }
+
+  .item .label { color: var(--text); }
+  .item .sub   { color: var(--muted); font-size: 0.62rem; }
+
+  /* ─── Pipeline steps ─── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pipe-step {
+    border-radius: 5px;
+    padding: 7px 10px;
+    border: 1px solid;
+    position: relative;
+  }
+
+  .pipe-step.trigger  { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.06); }
+  .pipe-step.parallel { border-color: rgba(91,156,246,0.4); background: rgba(91,156,246,0.06); }
+  .pipe-step.security { border-color: rgba(255,123,114,0.4); background: rgba(255,123,114,0.06); }
+  .pipe-step.docker   { border-color: rgba(91,156,246,0.4); background: rgba(91,156,246,0.06); }
+  .pipe-step.gitops   { border-color: rgba(249,202,106,0.4); background: rgba(249,202,106,0.06); }
+
+  .pipe-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pipe-label.trigger-lbl  { color: var(--green); }
+  .pipe-label.parallel-lbl { color: var(--blue); }
+  .pipe-label.security-lbl { color: var(--red); }
+  .pipe-label.docker-lbl   { color: var(--blue); }
+  .pipe-label.gitops-lbl   { color: var(--yellow); }
+
+  .pipe-detail {
+    font-size: 0.61rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .pipe-arrow {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--border);
+    margin: 1px 0;
+  }
+
+  .parallel-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .parallel-box {
+    border-radius: 4px;
+    padding: 5px 7px;
+    border: 1px solid rgba(91,156,246,0.3);
+    background: rgba(91,156,246,0.04);
+  }
+
+  .parallel-box-title {
+    font-size: 0.59rem;
+    font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .parallel-box-detail {
+    font-size: 0.57rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.4;
+  }
+
+  .gate-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.57rem;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,123,114,0.15);
+    color: var(--red);
+    border: 1px solid rgba(255,123,114,0.3);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-top: 3px;
+  }
+
+  /* ─── AWS section ─── */
+  .aws-cluster {
+    border: 1px solid rgba(249,202,106,0.3);
+    border-radius: 6px;
+    padding: 8px;
+    background: rgba(249,202,106,0.03);
+  }
+
+  .aws-cluster-header {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--yellow);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .eks-inner {
+    border: 1px solid rgba(91,156,246,0.25);
+    border-radius: 5px;
+    padding: 7px;
+    background: rgba(91,156,246,0.04);
+    margin-bottom: 6px;
+  }
+
+  .eks-header {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pods-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .pod {
+    border-radius: 4px;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .pod-name {
+    font-size: 0.6rem;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+  }
+
+  .pod-lang {
+    font-size: 0.54rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pod.go   { border-color: rgba(74,222,128,0.25); }
+  .pod.py   { border-color: rgba(91,156,246,0.25);  }
+
+  .argocd-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.57rem;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(74,222,128,0.1);
+    color: var(--green);
+    border: 1px solid rgba(74,222,128,0.25);
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin-bottom: 6px;
+  }
+
+  .data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .data-item {
+    border-radius: 4px;
+    padding: 5px 7px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .data-item-name {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .data-item-detail {
+    font-size: 0.54rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .ecr-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ecr-repos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .ecr-tag {
+    font-size: 0.57rem;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(91,156,246,0.1);
+    color: var(--blue);
+    border: 1px solid rgba(91,156,246,0.25);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  /* ─── Footer legend ─── */
+  footer {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    width: 100%;
+    max-width: 980px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ─── Fase 4: status e observabilidade ─── */
+  .status-line {
+    margin-top: 10px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 0.66rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+  .status-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .status-chip .sw { width: 14px; height: 10px; border-radius: 2px; border: 1.5px solid var(--muted); }
+  .status-chip .sw.planned { border-style: dashed; }
+
+  .planned { border-style: dashed !important; }
+  .new-tag {
+    font-size: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+    border: 1px solid rgba(74,222,128,0.35);
+    border-radius: 3px;
+    padding: 0 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+  }
+  .pod-otel { font-size: 0.52rem; color: var(--teal); font-family: 'JetBrains Mono', monospace; }
+
+  .ns-obs {
+    border: 1px dashed rgba(86,212,221,0.45);
+    border-radius: 5px;
+    padding: 7px;
+    background: rgba(86,212,221,0.04);
+    margin-bottom: 6px;
+  }
+  .ns-obs .eks-header { color: var(--teal); }
+
+  .obs-section {
+    width: 100%;
+    max-width: 940px;
+    margin-top: 22px;
+  }
+  .obs-header {
+    text-align: center;
+    padding: 8px 12px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid rgba(86,212,221,0.3);
+    border-bottom: none;
+    background: rgba(86,212,221,0.08);
+    color: var(--teal);
+  }
+  .obs-body {
+    border: 1px solid rgba(86,212,221,0.3);
+    border-radius: 0 0 8px 8px;
+    background: var(--surface);
+    padding: 12px;
+  }
+  .obs-body svg { width: 100%; height: auto; display: block; }
+  .obs-notes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .obs-note {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.62rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .obs-note b { color: var(--text); font-weight: 600; display: block; margin-bottom: 3px; font-family: 'Inter', sans-serif; font-size: 0.66rem; }
+
+  @media (max-width: 760px) {
+    .obs-notes { grid-template-columns: 1fr; }
+    .diagram {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+    .arrow-col { display: none; }
+  }
+</style>
+
+<header>
+  <h1>ToggleMaster — Arquitetura Fase 4</h1>
+  <p>IaC · CI/CD · GitOps · Observabilidade (OTel) · Alertas · Self-Healing</p>
+  <div class="status-line">
+    <span class="status-chip"><span class="sw"></span>implementado</span>
+    <span class="status-chip"><span class="sw planned"></span>planejado / em andamento</span>
+    <span class="status-chip"><span class="new-tag">FASE 4</span>novo nesta fase</span>
+    <span>atualizado em 26/10/2026</span>
+  </div>
+</header>
+
+<div class="diagram">
+
+  <!-- ══════════════ COL 1: IaC ══════════════ -->
+  <div>
+    <div class="col-header col-iac">⬡ Infrastructure as Code</div>
+    <div class="col-body col-iac-body">
+
+      <!-- Terraform State -->
+      <div class="block">
+        <div class="block-title" style="color:var(--purple)">
+          <span class="dot" style="background:var(--purple)"></span>
+          State Backend
+        </div>
+        <div class="item-list">
+          <div class="item"><span class="icon">🗄</span><div><span class="label">S3</span> <span class="sub">tfstate bucket</span></div></div>
+          <div class="item"><span class="icon">🔒</span><div><span class="label">DynamoDB</span> <span class="sub">state lock</span></div></div>
+        </div>
+      </div>
+
+      <!-- Modules -->
+      <div class="block">
+        <div class="block-title" style="color:var(--purple)">
+          <span class="dot" style="background:var(--purple)"></span>
+          Módulos Terraform
+        </div>
+        <div class="item-list">
+          <div class="item"><span class="icon">🌐</span><div><span class="label">networking</span><br><span class="sub">VPC · subnets · SGs</span></div></div>
+          <div class="item"><span class="icon">☸</span><div><span class="label">eks</span><br><span class="sub">cluster · node group 3 × t3.medium</span></div></div>
+          <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><span class="new-tag">FASE 4</span><br><span class="sub">helm_release (versão fixa)</span></div></div>
+          <div class="item"><span class="icon">🐘</span><div><span class="label">rds</span><br><span class="sub">PostgreSQL × 3</span></div></div>
+          <div class="item"><span class="icon">⚡</span><div><span class="label">elasticache</span><br><span class="sub">Redis</span></div></div>
+          <div class="item"><span class="icon">📋</span><div><span class="label">dynamo_sqs</span><br><span class="sub">DynamoDB + SQS</span></div></div>
+          <div class="item"><span class="icon">📦</span><div><span class="label">ecr</span><br><span class="sub">5 repositórios</span></div></div>
+        </div>
+      </div>
+
+      <!-- IAM -->
+      <div class="block">
+        <div class="block-title" style="color:var(--purple)">
+          <span class="dot" style="background:var(--purple)"></span>
+          IAM
+        </div>
+        <div class="item-list">
+          <div class="item"><span class="icon">🎓</span><div><span class="label">LabRole</span><br><span class="sub">data source (Academy)</span></div></div>
+        </div>
+      </div>
+
+      <!-- Apply output -->
+      <div style="background:rgba(201,114,249,0.08); border:1px solid rgba(201,114,249,0.25); border-radius:5px; padding:8px 10px; text-align:center;">
+        <div style="font-size:0.6rem; font-family:'JetBrains Mono',monospace; color:var(--purple); font-weight:600;">terraform apply</div>
+        <div style="font-size:0.58rem; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-top:3px;">25+ resources created</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ ARROW 1 ══════════════ -->
+  <div class="arrow-col">
+    <svg class="arrow-svg" width="40" height="60" viewBox="0 0 40 60">
+      <defs>
+        <marker id="ah1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#30363D"/>
+        </marker>
+      </defs>
+      <line x1="20" y1="5" x2="20" y2="48" stroke="#30363D" stroke-width="1.5" marker-end="url(#ah1)"/>
+    </svg>
+    <div class="arrow-label">provisions</div>
+  </div>
+
+  <!-- ══════════════ COL 2: CI/CD ══════════════ -->
+  <div>
+    <div class="col-header col-cicd">⚙ GitHub Actions CI/CD</div>
+    <div class="col-body col-cicd-body">
+
+      <div class="pipeline">
+
+        <!-- Trigger -->
+        <div class="pipe-step trigger">
+          <div class="pipe-label trigger-lbl">▶ Trigger</div>
+          <div class="pipe-detail">push / PR → main<br>services/&lt;service&gt;/** path filter</div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- Reusable workflow -->
+        <div style="background:rgba(91,156,246,0.05); border:1px dashed rgba(91,156,246,0.25); border-radius:5px; padding:6px 8px; font-size:0.58rem; font-family:'JetBrains Mono',monospace; color:var(--muted); text-align:center;">
+          workflow_call → reusable pipeline<br>
+          <span style="color:var(--blue)">go-ci.yml</span> · <span style="color:var(--orange)">python-ci.yml</span>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- Parallel -->
+        <div class="pipe-step parallel">
+          <div class="pipe-label parallel-lbl">⫸ Paralelo</div>
+          <div class="parallel-row">
+            <div class="parallel-box">
+              <div class="parallel-box-title">build-and-test</div>
+              <div class="parallel-box-detail">go build / compileall<br>go test / pytest</div>
+            </div>
+            <div class="parallel-box">
+              <div class="parallel-box-title">lint</div>
+              <div class="parallel-box-detail">golangci-lint<br>flake8</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- Security -->
+        <div class="pipe-step security">
+          <div class="pipe-label security-lbl">🔍 security-scan (gate)</div>
+          <div class="pipe-detail">
+            Trivy fs — SCA (requirements/go.mod)<br>
+            gosec / bandit — SAST (código fonte)
+          </div>
+          <div class="gate-badge">⛔ exit-code 1 em CRITICAL</div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- Docker -->
+        <div class="pipe-step docker">
+          <div class="pipe-label docker-lbl">🐳 docker-build-push</div>
+          <div class="pipe-detail">
+            docker build → Trivy image scan<br>
+            tag: SHA[:7] → ECR push<br>
+            <span style="color:var(--muted)">permissions: contents: write</span>
+          </div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- GitOps -->
+        <div class="pipe-step gitops">
+          <div class="pipe-label gitops-lbl">📝 update-gitops</div>
+          <div class="pipe-detail">
+            sed → deployment.yaml (nova tag)<br>
+            stefanzweifel/git-auto-commit@v5<br>
+            commit [skip ci] → main
+          </div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- App-of-apps (Fase 4) -->
+        <div class="pipe-step gitops planned">
+          <div class="pipe-label gitops-lbl">🌳 root-app (app-of-apps)<span class="new-tag">FASE 4</span></div>
+          <div class="pipe-detail">
+            gitops/apps/ → services + plataforma<br>
+            Helm: kube-prometheus-stack · loki<br>
+            opentelemetry-collector · remediator
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ ARROW 2 ══════════════ -->
+  <div class="arrow-col">
+    <svg class="arrow-svg" width="40" height="80" viewBox="0 0 40 80">
+      <defs>
+        <marker id="ah2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#30363D"/>
+        </marker>
+        <marker id="ah3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#30363D"/>
+        </marker>
+      </defs>
+      <!-- push image arrow (up-ish) -->
+      <line x1="20" y1="5" x2="20" y2="38" stroke="#5B9CF6" stroke-width="1.5" marker-end="url(#ah2)" stroke-dasharray="3,2"/>
+      <!-- gitops arrow (down-ish) -->
+      <line x1="20" y1="48" x2="20" y2="72" stroke="#F9CA6A" stroke-width="1.5" marker-end="url(#ah3)"/>
+    </svg>
+    <div class="arrow-label" style="color:var(--blue)">push image</div>
+    <div class="arrow-label" style="margin-top:14px; color:var(--yellow)">gitops commit → ArgoCD sync</div>
+  </div>
+
+  <!-- ══════════════ COL 3: AWS ══════════════ -->
+  <div>
+    <div class="col-header col-aws">☁ AWS Cloud (us-east-1)</div>
+    <div class="col-body col-aws-body">
+
+      <!-- ECR -->
+      <div class="block">
+        <div class="block-title" style="color:var(--blue)">
+          <span class="dot" style="background:var(--blue)"></span>
+          ECR — Container Registry
+        </div>
+        <div class="ecr-repos">
+          <span class="ecr-tag">togglemaster-auth</span>
+          <span class="ecr-tag">togglemaster-flag</span>
+          <span class="ecr-tag">togglemaster-targeting</span>
+          <span class="ecr-tag">togglemaster-evaluation</span>
+          <span class="ecr-tag">togglemaster-analytics</span>
+        </div>
+        <div style="font-size:0.57rem; font-family:'JetBrains Mono',monospace; color:var(--muted); margin-top:5px;">tag: &lt;SHA[:7]&gt; · immutability on</div>
+      </div>
+
+      <!-- EKS -->
+      <div class="aws-cluster">
+        <div class="aws-cluster-header">☸ EKS Cluster</div>
+
+        <div class="argocd-badge">● ArgoCD · auto-sync · selfHeal</div>
+
+        <div class="eks-inner">
+          <div class="eks-header">📦 namespace: togglemaster</div>
+          <div class="pods-grid">
+            <div class="pod go">
+              <div class="pod-name">auth-service</div>
+              <div class="pod-lang">Go</div>
+              <div class="pod-otel">+ otelhttp · /chaos</div>
+            </div>
+            <div class="pod py">
+              <div class="pod-name">flag-service</div>
+              <div class="pod-lang">Python</div>
+              <div class="pod-otel">+ OTel auto-instr.</div>
+            </div>
+            <div class="pod py">
+              <div class="pod-name">targeting-svc</div>
+              <div class="pod-lang">Python</div>
+              <div class="pod-otel">+ OTel auto-instr.</div>
+            </div>
+            <div class="pod go">
+              <div class="pod-name">evaluation-svc</div>
+              <div class="pod-lang">Go</div>
+              <div class="pod-otel">+ otelhttp · redisotel</div>
+            </div>
+            <div class="pod py" style="grid-column: 1 / -1;">
+              <div class="pod-name">analytics-service</div>
+              <div class="pod-lang">Python</div>
+              <div class="pod-otel">+ OTel auto-instr. · contexto via SQS</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ns-obs">
+          <div class="eks-header">📈 namespace: observability<span class="new-tag">FASE 4</span></div>
+          <div class="pods-grid">
+            <div class="pod planned" style="grid-column: 1 / -1; border-color: rgba(86,212,221,0.45);">
+              <div class="pod-name">otel-collector</div>
+              <div class="pod-lang">DaemonSet · otlp + filelog</div>
+            </div>
+            <div class="pod planned">
+              <div class="pod-name">prometheus</div>
+              <div class="pod-lang">métricas</div>
+            </div>
+            <div class="pod planned">
+              <div class="pod-name">loki</div>
+              <div class="pod-lang">logs</div>
+            </div>
+            <div class="pod planned">
+              <div class="pod-name">grafana</div>
+              <div class="pod-lang">dashboard · alertas</div>
+            </div>
+            <div class="pod planned" style="border-color: rgba(255,123,114,0.45);">
+              <div class="pod-name">remediator</div>
+              <div class="pod-lang">self-healing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Layer -->
+      <div class="block">
+        <div class="block-title" style="color:var(--orange)">
+          <span class="dot" style="background:var(--orange)"></span>
+          Camada de Dados
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-item-name">🐘 RDS</div>
+            <div class="data-item-detail">PostgreSQL × 3<br>auth · flag · targeting</div>
+          </div>
+          <div class="data-item">
+            <div class="data-item-name">⚡ Redis</div>
+            <div class="data-item-detail">ElastiCache<br>cache de flags</div>
+          </div>
+          <div class="data-item">
+            <div class="data-item-name">📋 Dynamo</div>
+            <div class="data-item-detail">ToggleMaster<br>Analytics table</div>
+          </div>
+          <div class="data-item">
+            <div class="data-item-name">📨 SQS</div>
+            <div class="data-item-detail">event queue<br>analytics async</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════ FASE 4: OBSERVABILIDADE ══════════════ -->
+<section class="obs-section">
+  <div class="obs-header">◎ Observabilidade &amp; Resposta a Incidentes <span class="new-tag">FASE 4</span></div>
+  <div class="obs-body">
+    <svg viewBox="0 0 940 340" role="img" aria-label="Fluxo de telemetria pelo OTel Collector e ciclo de alerta com self-healing" font-family="Inter, sans-serif">
+      <defs>
+        <marker id="oa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8B949E"/></marker>
+        <marker id="oar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF7B72"/></marker>
+      </defs>
+
+      <!-- conectores -->
+      <g fill="none" stroke="#8B949E" stroke-width="1.25">
+        <path d="M196 90H262" marker-end="url(#oa)"/>
+        <path d="M196 150H262" marker-end="url(#oa)"/>
+        <path d="M452 46H520" marker-end="url(#oa)"/>
+        <path d="M452 114H520" marker-end="url(#oa)"/>
+        <path d="M452 182H520" marker-end="url(#oa)"/>
+        <path d="M700 114H760" marker-end="url(#oa)"/>
+        <path d="M700 182H730V150H760" marker-end="url(#oa)"/>
+        <path d="M842 174V240H357V262" marker-end="url(#oa)"/>
+        <path d="M610 240V262" marker-end="url(#oa)"/>
+        <path d="M842 240V262" marker-end="url(#oa)"/>
+      </g>
+      <path d="M262 290H106V204" fill="none" stroke="#FF7B72" stroke-width="1.5" marker-end="url(#oar)"/>
+
+      <!-- rótulos das arestas -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E" text-anchor="middle">
+        <text x="229" y="82">OTLP</text>
+        <text x="229" y="142">stdout</text>
+        <text x="600" y="232">contact points</text>
+      </g>
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#FF7B72">
+        <text x="116" y="240">kubectl rollout restart</text>
+        <text x="116" y="254">deployment/auth</text>
+      </g>
+
+      <!-- microsserviços -->
+      <rect x="16" y="30" width="180" height="170" rx="8" fill="#1C2128" stroke="#F9CA6A" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="32" y="56" font-size="13" font-weight="600" fill="#E6EDF3">Microsserviços (5)</text>
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8B949E">
+        <text x="32" y="80">ns togglemaster</text>
+        <text x="32" y="110">evaluation · auth (Go)</text>
+        <text x="32" y="128">flag · targeting ·</text>
+        <text x="32" y="146">analytics (Python)</text>
+        <text x="32" y="176" fill="#56D4DD">SDK OpenTelemetry</text>
+      </g>
+
+      <!-- collector -->
+      <rect x="262" y="30" width="190" height="170" rx="8" fill="rgba(86,212,221,0.08)" stroke="#56D4DD" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="278" y="56" font-size="13" font-weight="600" fill="#E6EDF3">OTel Collector</text>
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8B949E">
+        <text x="278" y="80">DaemonSet</text>
+        <text x="278" y="110">in:  otlp, filelog</text>
+        <text x="278" y="128">proc: k8sattributes,</text>
+        <text x="278" y="146">      memory_limiter, batch</text>
+        <text x="278" y="176">out: prom · loki · otlp</text>
+      </g>
+
+      <!-- backends -->
+      <rect x="520" y="20" width="180" height="52" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="534" y="42" font-size="12.5" font-weight="600" fill="#E6EDF3">New Relic APM</text>
+      <text x="534" y="60" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">traces · service map</text>
+
+      <rect x="520" y="88" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="534" y="110" font-size="12.5" font-weight="600" fill="#E6EDF3">Prometheus</text>
+      <text x="534" y="128" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">métricas apps + cluster</text>
+
+      <rect x="520" y="156" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="534" y="178" font-size="12.5" font-weight="600" fill="#E6EDF3">Loki</text>
+      <text x="534" y="196" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">logs de todos os pods</text>
+
+      <!-- grafana -->
+      <rect x="760" y="88" width="164" height="86" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="774" y="110" font-size="12.5" font-weight="600" fill="#E6EDF3">Grafana</text>
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">
+        <text x="774" y="128">dashboard + Alerting</text>
+        <text x="774" y="146" fill="#FF7B72">5xx auth &gt; 5%</text>
+        <text x="774" y="162">por 2 min</text>
+      </g>
+
+      <!-- resposta -->
+      <rect x="262" y="262" width="190" height="56" rx="8" fill="rgba(255,123,114,0.08)" stroke="#FF7B72" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="278" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">Remediator</text>
+      <text x="278" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">webhook → K8s API · RBAC</text>
+
+      <rect x="520" y="262" width="180" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="534" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">PagerDuty</text>
+      <text x="534" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">incidente · Events API v2</text>
+
+      <rect x="760" y="262" width="164" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="774" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">Discord</text>
+      <text x="774" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">#alertas · webhook</text>
+    </svg>
+
+    <div class="obs-notes">
+      <div class="obs-note"><b>Roteamento OTel</b>Os serviços só conhecem o Collector. Métricas → Prometheus, logs → Loki, traces → New Relic. Trocar de backend é mudar o exporter, não o código.</div>
+      <div class="obs-note"><b>Alerta → ação</b>Uma regra do Grafana abre o incidente no PagerDuty, notifica o Discord e chama o remediator, que reinicia o deployment sem intervenção humana.</div>
+      <div class="obs-note"><b>Custo zero</b>Stack open source no cluster. New Relic, PagerDuty e Discord nos planos gratuitos. EKS só nas sessões de integração e gravação (crédito Academy).</div>
+    </div>
+  </div>
+</section>
+
+<!-- Legend -->
+<footer>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Terraform IaC</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>GitHub Actions · ECR · EKS</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Security gate (CRITICAL bloqueante)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--yellow)"></span>GitOps flow → ArgoCD sync</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>Go services</div>
+  <div class="legend-item"><span class="legend-dot" style="background:rgba(91,156,246,0.5)"></span>Python services</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span>OpenTelemetry</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span>SaaS externo (free tier)</div>
+</footer>
