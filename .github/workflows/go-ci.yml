@@ -73,7 +73,7 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: gosec — SAST (codigo fonte)
-        uses: securego/gosec@master
+        uses: securego/gosec@v2.22.11
         with:
           args: '-severity high -confidence high ./services/${{ inputs.service_dir }}/...'
 
