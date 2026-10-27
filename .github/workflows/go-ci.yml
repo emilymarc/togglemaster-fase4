@@ -1,0 +1,137 @@
+name: reusable-go-ci
+
+on:
+  workflow_call:
+    inputs:
+      service_dir:
+        description: "Pasta em services/ (ex.: auth)"
+        required: true
+        type: string
+      service_name:
+        description: "Nome do repositorio no ECR (ex.: auth-service)"
+        required: true
+        type: string
+
+jobs:
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/${{ inputs.service_dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: services/${{ inputs.service_dir }}/go.sum
+
+      - name: Dependencias
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Testes unitarios
+        run: go test -v ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: services/${{ inputs.service_dir }}
+          args: --timeout=5m
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy — SCA (dependencias)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: 'services/${{ inputs.service_dir }}'
+          severity: 'CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: 'true'
+
+      - name: gosec — SAST (codigo fonte)
+        uses: securego/gosec@master
+        with:
+          args: '-severity high -confidence high ./services/${{ inputs.service_dir }}/...'
+
+  docker-build-push:
+    runs-on: ubuntu-latest
+    needs: [security-scan]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Login no ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Derivar tag e URL da imagem
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          REPO="togglemaster-${{ inputs.service_dir }}"
+          echo "image=${REGISTRY}/${REPO}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "tag=${SHORT_SHA}"                       >> "$GITHUB_OUTPUT"
+
+      - name: Docker build
+        run: |
+          docker build \
+            -t "${{ steps.meta.outputs.image }}" \
+            services/${{ inputs.service_dir }}
+
+      - name: Trivy — scan da imagem (CRITICAL bloqueia)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'image'
+          image-ref: ${{ steps.meta.outputs.image }}
+          severity: 'CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: 'true'
+
+      - name: Push no ECR
+        if: github.event_name == 'push'
+        run: docker push "${{ steps.meta.outputs.image }}"
+
+      - name: Atualizar tag no GitOps
+        if: github.event_name == 'push'
+        run: |
+          sed -i \
+            "s|image: .*togglemaster-${{ inputs.service_dir }}:.*|image: ${{ steps.meta.outputs.image }}|" \
+            gitops/services/${{ inputs.service_dir }}/deployment.yaml
+
+      - name: Commitar e subir a mudança
+        if: github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "deploy: ${{ inputs.service_dir }} -> ${{ steps.meta.outputs.tag }} [skip ci]"
+          file_pattern: gitops/services/${{ inputs.service_dir }}/deployment.yaml
