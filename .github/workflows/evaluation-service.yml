@@ -14,6 +14,8 @@ on:
 
 jobs:
   ci:
+    permissions:
+      contents: write
     uses: ./.github/workflows/go-ci.yml
     with:
       service_dir: evaluation
