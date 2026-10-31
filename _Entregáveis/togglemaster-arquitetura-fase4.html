@@ -495,8 +495,34 @@
   }
   .obs-note b { color: var(--text); font-weight: 600; display: block; margin-bottom: 3px; font-family: 'Inter', sans-serif; font-size: 0.66rem; }
 
+  /* ─── Status e checklist ─── */
+  .status-section { width: 100%; max-width: 940px; margin-top: 22px; }
+  .status-header {
+    text-align: center; padding: 8px 12px 12px; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; border-radius: 6px 6px 0 0;
+    border: 1px solid rgba(74,222,128,0.3); border-bottom: none;
+    background: rgba(74,222,128,0.08); color: var(--green);
+  }
+  .status-body {
+    border: 1px solid rgba(74,222,128,0.3); border-radius: 0 0 8px 8px; background: var(--surface);
+    padding: 12px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px;
+  }
+  .status-body h3 { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .st-table { width: 100%; border-collapse: collapse; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; }
+  .st-table td { padding: 5px 6px; border-top: 1px solid var(--border); vertical-align: top; color: var(--muted); }
+  .st-table td:first-child { color: var(--text); }
+  .st { white-space: nowrap; font-weight: 600; }
+  .st.ok { color: var(--green); } .st.wip { color: var(--yellow); } .st.todo { color: var(--muted); } .st.hold { color: var(--orange); }
+  .check { list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+  .check li::before { content: '☐ '; color: var(--muted); }
+  .check li.done { color: var(--text); }
+  .check li.done::before { content: '☑ '; color: var(--green); }
+  .check .grp { color: var(--text); font-family: 'Inter', sans-serif; font-weight: 600; margin-top: 6px; }
+  .check .grp::before { content: ''; }
+
   @media (max-width: 760px) {
     .obs-notes { grid-template-columns: 1fr; }
+    .status-body { grid-template-columns: 1fr; }
     .diagram {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
@@ -923,6 +949,49 @@
       <div class="obs-note"><b>Roteamento OTel</b>Os serviços só conhecem o Collector. Métricas → Prometheus, logs → Loki, traces → New Relic. Trocar de backend é mudar o exporter, não o código.</div>
       <div class="obs-note"><b>Alerta → ação</b>Uma regra do Grafana abre o incidente no PagerDuty, notifica o Discord e chama o remediator, que reinicia o deployment sem intervenção humana.</div>
       <div class="obs-note"><b>Custo zero</b>Stack open source no cluster. New Relic, PagerDuty e Discord nos planos gratuitos. EKS só nas sessões de integração e gravação (crédito Academy).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ STATUS E CHECKLIST ══════════════ -->
+<section class="status-section">
+  <div class="status-header">☑ Status e checklist da Fase 4</div>
+  <div class="status-body">
+    <div>
+      <h3>Etapas do plano</h3>
+      <table class="st-table">
+        <tr><td>0 · Repositório da Fase 4 a partir da Fase 3</td><td class="st ok">concluído</td></tr>
+        <tr><td>CI no repositório novo (GITHUB_TOKEN, gosec travado, environment "aws academy")</td><td class="st wip">em andamento</td></tr>
+        <tr><td>1 · Contas gratuitas: New Relic, PagerDuty, Discord</td><td class="st todo">a fazer</td></tr>
+        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD com versão fixa</td><td class="st wip">em andamento</td></tr>
+        <tr><td>3 · Laboratório local de observabilidade (docker-compose)</td><td class="st todo">a fazer</td></tr>
+        <tr><td>4 · Instrumentação OpenTelemetry dos 5 serviços</td><td class="st todo">a fazer</td></tr>
+        <tr><td>5 · Dashboard do Grafana e regras de alerta</td><td class="st todo">a fazer</td></tr>
+        <tr><td>6 · Remediator (self-healing)</td><td class="st todo">a fazer</td></tr>
+        <tr><td>7 · Helm charts e Applications no GitOps</td><td class="st todo">a fazer</td></tr>
+        <tr><td>8–9 · Sessões no EKS: integração, gravação e prints</td><td class="st todo">a fazer</td></tr>
+        <tr><td>Varredura de segredos (Trivy)</td><td class="st hold">adiado</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Entregáveis do enunciado</h3>
+      <ul class="check">
+        <li class="grp">Código no repositório</li>
+        <li>IaC/GitOps com a stack de monitoramento e o OTel Collector</li>
+        <li>Código das aplicações instrumentado</li>
+        <li>Scripts/automações do self-healing</li>
+        <li class="grp">Vídeo (até 25 min)</li>
+        <li>EKS e ArgoCD rodando com a nova stack</li>
+        <li>Grafana: dashboard, busca no Loki, roteamento do OTel</li>
+        <li>APM: service map e trace distribuído</li>
+        <li>Prova real: falha → alerta → PagerDuty + Discord → self-healing</li>
+        <li class="grp">Relatório (PDF)</li>
+        <li>Nomes, RMs e usernames</li>
+        <li class="done">Link do repositório</li>
+        <li>Link do vídeo</li>
+        <li>Prints: dashboard, trace, notificação, self-healing</li>
+        <li class="done">Justificativa técnica (OTel, New Relic, PagerDuty)</li>
+      </ul>
     </div>
   </div>
 </section>
