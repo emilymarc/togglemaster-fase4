@@ -90,6 +90,7 @@ jobs:
   docker-build-push:
     runs-on: ubuntu-latest
     needs: [security-scan]
+    environment: aws academy
     permissions:
       contents: write
     steps:
