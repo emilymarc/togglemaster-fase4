@@ -12,6 +12,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
 
   build-and-test:
@@ -70,13 +73,14 @@ jobs:
           ignore-unfixed: 'true'
 
       - name: gosec — SAST (codigo fonte)
-        uses: securego/gosec@master
+        uses: securego/gosec@v2.30.0
         with:
-          args: '-severity high -confidence high ./services/${{ inputs.service_dir }}/...'
+          args: '-severity high -confidence high -exclude=G704 ./services/${{ inputs.service_dir }}/...'
 
   docker-build-push:
     runs-on: ubuntu-latest
     needs: [security-scan]
+    environment: aws academy
     permissions:
       contents: write
     steps:

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Prevencao local: bloqueia o commit se o Trivy achar um segredo.
+# Ativar uma vez:  git config core.hooksPath .githooks
+if ! command -v trivy >/dev/null 2>&1; then
+  echo "[pre-commit] trivy nao encontrado no PATH; varredura local ignorada (o CI ainda varre)."
+  exit 0
+fi
+trivy fs --scanners secret --secret-config trivy-secret.yaml \
+  --skip-dirs infra/.terraform --exit-code 1 --quiet . \
+  || { echo "[pre-commit] Segredo detectado. Commit bloqueado."; exit 1; }

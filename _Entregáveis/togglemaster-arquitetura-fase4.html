@@ -512,7 +512,7 @@
     <span class="status-chip"><span class="sw"></span>implementado</span>
     <span class="status-chip"><span class="sw planned"></span>planejado / em andamento</span>
     <span class="status-chip"><span class="new-tag">FASE 4</span>novo nesta fase</span>
-    <span>atualizado em 26/10/2026</span>
+    <span>atualizado em 31/10/2026</span>
   </div>
 </header>
 
@@ -596,6 +596,19 @@
         <div class="pipe-step trigger">
           <div class="pipe-label trigger-lbl">▶ Trigger</div>
           <div class="pipe-detail">push / PR → main<br>services/&lt;service&gt;/** path filter</div>
+        </div>
+
+        <div class="pipe-arrow">↓</div>
+
+        <!-- Secret scan (Fase 4) -->
+        <div class="pipe-step security planned">
+          <div class="pipe-label security-lbl">🔑 secret-scan (repo inteiro) · adiado<span class="new-tag">FASE 4</span></div>
+          <div class="pipe-detail">
+            workflow próprio · todo push/PR<br>
+            Trivy secret + regras NR · PD · Discord<br>
+            local: hook pre-commit (.githooks)
+          </div>
+          <div class="gate-badge">⛔ qualquer segredo bloqueia</div>
         </div>
 
         <div class="pipe-arrow">↓</div>

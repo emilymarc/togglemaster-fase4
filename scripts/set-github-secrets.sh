@@ -6,6 +6,7 @@
 set -euo pipefail
 
 REPO="emilymarc/togglemaster-fase4"
+ENVIRONMENT="aws academy"   # environment do GitHub usado pelo job docker-build-push
 
 echo "Lendo credenciais via aws configure get ..."
 KEY_ID=$(aws configure get aws_access_key_id)
@@ -18,10 +19,10 @@ if [[ -z "$KEY_ID" || -z "$SECRET" || -z "$TOKEN" ]]; then
   exit 1
 fi
 
-gh secret set AWS_ACCESS_KEY_ID     --body "$KEY_ID" --repo "$REPO"
-gh secret set AWS_SECRET_ACCESS_KEY --body "$SECRET" --repo "$REPO"
-gh secret set AWS_SESSION_TOKEN     --body "$TOKEN"  --repo "$REPO"
+gh secret set AWS_ACCESS_KEY_ID     --body "$KEY_ID" --repo "$REPO" --env "$ENVIRONMENT"
+gh secret set AWS_SECRET_ACCESS_KEY --body "$SECRET" --repo "$REPO" --env "$ENVIRONMENT"
+gh secret set AWS_SESSION_TOKEN     --body "$TOKEN"  --repo "$REPO" --env "$ENVIRONMENT"
 
 echo ""
-echo "Secrets atualizados em $REPO"
+echo "Secrets atualizados em $REPO (environment: $ENVIRONMENT)"
 echo "Lembre de rodar este script toda vez que o Academy renovar as credenciais (~4h)."
