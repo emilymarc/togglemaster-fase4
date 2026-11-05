@@ -1,0 +1,10 @@
+# como ler: StorageClass [name] cria discos com [provisioner] (driver EBS CSI) do tipo [parameters.type]; o disco só é criado quando um pod usa o volume [volumeBindingMode] e é apagado junto com o volume [reclaimPolicy]
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+parameters:
+  type: gp3
