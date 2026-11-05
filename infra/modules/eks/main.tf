@@ -13,3 +13,10 @@ resource "aws_eks_cluster" "main" {
 
   enabled_cluster_log_types = ["api", "audit"]
 }
+
+# Driver que cria volumes EBS para os PersistentVolumeClaims
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "aws-ebs-csi-driver"
+  depends_on   = [aws_eks_node_group.main]
+}
