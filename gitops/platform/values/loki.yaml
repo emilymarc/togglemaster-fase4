@@ -1,3 +1,4 @@
+# como ler: values do chart loki. [deploymentMode] escolhe o modo (um processo só); [loki] configura armazenamento e esquema; [singleBinary] define réplicas e disco; o resto desliga partes que não usamos
 deploymentMode: SingleBinary     # um processo só (modo mais leve)
 
 loki:
@@ -19,7 +20,9 @@ loki:
 singleBinary:
   replicas: 1
   persistence:
-    enabled: false               # sem disco persistente: os logs somem se o pod reiniciar
+    enabled: true                # logs guardados em disco EBS: não somem se o pod reiniciar
+    size: 10Gi
+    storageClass: ebs-sc         # StorageClass criada em gitops/platform/storage
 
 # O modo SingleBinary não usa estes componentes
 read:

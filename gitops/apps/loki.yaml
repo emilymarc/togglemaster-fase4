@@ -1,3 +1,5 @@
+# como ler: ArgoCD instale [repoURL] em [destination]. Use [values] como descrição de como a instalação deve ser, o arquivo de detalhes está em [valuesFiles]
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

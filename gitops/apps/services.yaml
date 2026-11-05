@@ -1,3 +1,4 @@
+# como ler: ArgoCD esta aplicação [name] está em [path] será aplicada em [destination] + detalhes
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

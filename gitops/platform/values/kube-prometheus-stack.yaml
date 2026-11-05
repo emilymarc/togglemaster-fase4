@@ -1,3 +1,4 @@
+# como ler: values do chart kube-prometheus-stack. Cada bloco [alertmanager], [prometheus], [grafana] liga, desliga ou ajusta uma parte do chart
 alertmanager:
   enabled: false # no grafana
 
@@ -9,7 +10,7 @@ prometheus:
         memory: 400Mi
 
 grafana:
-  additinalDataSources:
+  additionalDataSources:
     - name: Loki
       type: loki
       url: http://loki-gateway.observability.svc.cluster.local # analiza ele mesmo e manda para Gragana
