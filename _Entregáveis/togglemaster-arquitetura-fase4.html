@@ -570,7 +570,7 @@
         <div class="item-list">
           <div class="item"><span class="icon">🌐</span><div><span class="label">networking</span><br><span class="sub">VPC · subnets · SGs</span></div></div>
           <div class="item"><span class="icon">☸</span><div><span class="label">eks</span><br><span class="sub">cluster · node group 3 × t3.medium</span></div></div>
-          <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><span class="new-tag">FASE 4</span><br><span class="sub">helm_release (versão fixa)</span></div></div>
+          <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><span class="new-tag">FASE 4</span><br><span class="sub">scripts/install-argocd.sh (v3.5.6)</span></div></div>
           <div class="item"><span class="icon">🐘</span><div><span class="label">rds</span><br><span class="sub">PostgreSQL × 3</span></div></div>
           <div class="item"><span class="icon">⚡</span><div><span class="label">elasticache</span><br><span class="sub">Redis</span></div></div>
           <div class="item"><span class="icon">📋</span><div><span class="label">dynamo_sqs</span><br><span class="sub">DynamoDB + SQS</span></div></div>
@@ -627,8 +627,8 @@
         <div class="pipe-arrow">↓</div>
 
         <!-- Secret scan (Fase 4) -->
-        <div class="pipe-step security planned">
-          <div class="pipe-label security-lbl">🔑 secret-scan (repo inteiro) · adiado<span class="new-tag">FASE 4</span></div>
+        <div class="pipe-step security">
+          <div class="pipe-label security-lbl">🔑 secret-scan (repo inteiro)<span class="new-tag">FASE 4</span></div>
           <div class="pipe-detail">
             workflow próprio · todo push/PR<br>
             Trivy secret + regras NR · PD · Discord<br>
@@ -706,7 +706,7 @@
           <div class="pipe-detail">
             gitops/apps/ → services + plataforma<br>
             Helm: kube-prometheus-stack · loki<br>
-            opentelemetry-collector · remediator
+            opentelemetry-collector
           </div>
         </div>
 
@@ -808,13 +808,9 @@
               <div class="pod-name">loki</div>
               <div class="pod-lang">logs</div>
             </div>
-            <div class="pod planned">
+            <div class="pod planned" style="grid-column: 1 / -1;">
               <div class="pod-name">grafana</div>
               <div class="pod-lang">dashboard · alertas</div>
-            </div>
-            <div class="pod planned" style="border-color: rgba(255,123,114,0.45);">
-              <div class="pod-name">remediator</div>
-              <div class="pod-lang">self-healing</div>
             </div>
           </div>
         </div>
@@ -933,8 +929,8 @@
 
       <!-- resposta -->
       <rect x="262" y="262" width="190" height="56" rx="8" fill="rgba(255,123,114,0.08)" stroke="#FF7B72" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <text x="278" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">Remediator</text>
-      <text x="278" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">webhook → K8s API · RBAC</text>
+      <text x="278" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">GitHub Action</text>
+      <text x="278" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">repository_dispatch</text>
 
       <rect x="520" y="262" width="180" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
       <text x="534" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">PagerDuty</text>
@@ -947,7 +943,7 @@
 
     <div class="obs-notes">
       <div class="obs-note"><b>Roteamento OTel</b>Os serviços só conhecem o Collector. Métricas → Prometheus, logs → Loki, traces → New Relic. Trocar de backend é mudar o exporter, não o código.</div>
-      <div class="obs-note"><b>Alerta → ação</b>Uma regra do Grafana abre o incidente no PagerDuty, notifica o Discord e chama o remediator, que reinicia o deployment sem intervenção humana.</div>
+      <div class="obs-note"><b>Alerta → ação</b>Uma regra do Grafana abre o incidente no PagerDuty, notifica o Discord e dispara uma GitHub Action (repository_dispatch), que reinicia o deployment sem intervenção humana.</div>
       <div class="obs-note"><b>Custo zero</b>Stack open source no cluster. New Relic, PagerDuty e Discord nos planos gratuitos. EKS só nas sessões de integração e gravação (crédito Academy).</div>
     </div>
   </div>
@@ -961,16 +957,16 @@
       <h3>Etapas do plano</h3>
       <table class="st-table">
         <tr><td>0 · Repositório da Fase 4 a partir da Fase 3</td><td class="st ok">concluído</td></tr>
-        <tr><td>CI no repositório novo (GITHUB_TOKEN, gosec travado, environment "aws academy")</td><td class="st wip">em andamento</td></tr>
-        <tr><td>1 · Contas gratuitas: New Relic, PagerDuty, Discord</td><td class="st todo">a fazer</td></tr>
-        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD com versão fixa</td><td class="st wip">em andamento</td></tr>
+        <tr><td>CI no repositório novo (GITHUB_TOKEN, gosec travado, environment "aws academy")</td><td class="st ok">concluído</td></tr>
+        <tr><td>1 · Contas gratuitas: New Relic ✓, Discord (falta webhook), PagerDuty</td><td class="st wip">em andamento</td></tr>
+        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD v3.5.6 fixo (validar no EKS)</td><td class="st ok">concluído</td></tr>
         <tr><td>3 · Laboratório local de observabilidade (docker-compose)</td><td class="st todo">a fazer</td></tr>
         <tr><td>4 · Instrumentação OpenTelemetry dos 5 serviços</td><td class="st todo">a fazer</td></tr>
         <tr><td>5 · Dashboard do Grafana e regras de alerta</td><td class="st todo">a fazer</td></tr>
-        <tr><td>6 · Remediator (self-healing)</td><td class="st todo">a fazer</td></tr>
+        <tr><td>6 · Self-healing: GitHub Action via repository_dispatch</td><td class="st todo">a fazer</td></tr>
         <tr><td>7 · Helm charts e Applications no GitOps</td><td class="st todo">a fazer</td></tr>
         <tr><td>8–9 · Sessões no EKS: integração, gravação e prints</td><td class="st todo">a fazer</td></tr>
-        <tr><td>Varredura de segredos (Trivy)</td><td class="st hold">adiado</td></tr>
+        <tr><td>Varredura de segredos (Trivy, repo inteiro + hook local)</td><td class="st ok">concluído</td></tr>
       </table>
     </div>
     <div>

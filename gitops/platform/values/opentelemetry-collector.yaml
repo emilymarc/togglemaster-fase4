@@ -1,0 +1,43 @@
+# como ler: values do chart opentelemetry-collector. [mode] define como roda; [presets] liga atalhos prontos; [config] diz de onde recebe, como trata e para onde envia
+mode: daemonset
+
+image:
+  repository: otel/opentelemetry-collector-contrib 
+
+presets:
+  logsCollection:
+    enabled: true          # lê os logs dos pods no nó (filelog)
+  kubernetesAttributes:
+    enabled: true          # marca cada dado com pod, namespace e deployment
+
+service:
+  enabled: true            # endereço fixo para os serviços enviarem OTLP
+
+extraEnvs:
+  - name: NEW_RELIC_LICENSE_KEY
+    valueFrom:
+      secretKeyRef:
+        name: newrelic-license     # secret criado manual no EKS
+        key: license-key
+
+config:
+  exporters:
+    prometheusremotewrite:
+      endpoint: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090/api/v1/write
+    otlphttp/loki:
+      endpoint: http://loki-gateway.observability.svc.cluster.local/otlp
+    otlp/newrelic:
+      endpoint: otlp.nr-data.net:4317
+      headers:
+        api-key: ${env:NEW_RELIC_LICENSE_KEY}
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        exporters: [otlp/newrelic]
+      metrics:
+        receivers: [otlp]
+        exporters: [prometheusremotewrite, otlp/newrelic]
+      logs:
+        receivers: [otlp]
+        exporters: [otlphttp/loki]

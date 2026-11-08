@@ -28,14 +28,15 @@ ToggleMaster é uma plataforma de **feature flags** com 5 microsserviços, impla
 | Etapa | Descrição | Status |
 |-------|-----------|--------|
 | 0 | Repositório da Fase 4 a partir da base da Fase 3 | ✅ Concluída |
-| — | CI: permissões explícitas do `GITHUB_TOKEN` (repositório novo vem com token só leitura) | ✅ Concluída |
-| 1 | Contas gratuitas: New Relic, PagerDuty, Discord | ⏳ Próxima |
-| 2 | GitOps da plataforma: ArgoCD versionado + app-of-apps | ⬜ Planejada |
+| — | CI: permissões do `GITHUB_TOKEN`, gosec travado, environment `aws academy`, varredura de segredos (Trivy) | ✅ Concluída |
+| 1 | Contas gratuitas: New Relic, PagerDuty, Discord | ⏳ Em andamento |
+| 2 | GitOps da plataforma: ArgoCD versionado + app-of-apps | ✅ Concluída (validar no EKS) |
 | 3 | Laboratório local de observabilidade (docker-compose) | ⬜ Planejada |
 | 4 | Instrumentação OpenTelemetry dos 5 serviços | ⬜ Planejada |
 | 5 | Dashboard do Grafana e regras de alerta | ⬜ Planejada |
-| 6 | Remediator (self-healing) | ⬜ Planejada |
-| 7 | Helm charts e Applications no GitOps | ⬜ Planejada |
+| 6 | Self-healing: GitHub Action disparada pelo alerta (`repository_dispatch`) | ⬜ Planejada |
+| 7 | Helm charts no GitOps: Prometheus, Grafana e Loki (requisito 1) | ✅ Concluída (validar no EKS) |
+| 7 | Helm chart no GitOps: OTel Collector (requisito 2) | ⏳ Em andamento |
 | 8–9 | Sessões no EKS: integração, gravação e evidências | ⬜ Planejada |
 
 ---
@@ -56,7 +57,7 @@ Fluxo de telemetria e resposta (alvo da Fase 4):
                                                                  │
                          ┌──────────────────────┬────────────────┴───────────┐
                          ▼                      ▼                            ▼
-                  PagerDuty (incidente)   Discord (ChatOps)      Remediator (self-healing)
+                  PagerDuty (incidente)   Discord (ChatOps)   GitHub Action (self-healing)
                                                                              │
                                                kubectl rollout restart deployment/auth
 ```
@@ -71,7 +72,7 @@ Fluxo de telemetria e resposta (alvo da Fase 4):
 | APM | New Relic | Plano gratuito permanente (100 GB/mês, sem cartão) e ingestão OTLP direta |
 | Incidentes | PagerDuty (Free) | OpsGenie encerrou novos cadastros em 2025 e será desligado em abr/2027 |
 | ChatOps | Discord | Webhook sem aprovação de app; contact point nativo no Grafana |
-| Self-healing | Remediator no cluster (RBAC mínimo) | Lambda exige IAM role (bloqueada no Academy); GitHub Action dependeria de credenciais temporárias |
+| Self-healing | GitHub Action disparada via webhook (`repository_dispatch`) | Opção do enunciado; o log de cada execução fica na aba Actions. Lambda exige IAM role, bloqueada no Academy |
 
 ---
 
@@ -102,10 +103,14 @@ Fluxo de telemetria e resposta (alvo da Fase 4):
 │       └── data-stores/            # 3× RDS PostgreSQL, ElastiCache Redis, DynamoDB, SQS
 ├── services/                       # auth, evaluation (Go) · flag, targeting, analytics (Python)
 ├── gitops/
-│   ├── argocd/applications.yaml    # Applications do ArgoCD (um por serviço)
+│   ├── root-app.yaml               # Root app (app-of-apps), aplicada uma única vez
+│   ├── apps/                       # Uma Application por componente (serviços, Prometheus, Loki, storage)
+│   ├── platform/values/            # values dos Helm charts
+│   ├── platform/storage/           # StorageClass ebs-sc (discos EBS gp3)
 │   └── services/<svc>/deployment.yaml
 ├── scripts/
-│   ├── set-github-secrets.sh       # Copia as credenciais do Academy para os secrets do repositório
+│   ├── install-argocd.sh           # Instala o ArgoCD (versão fixa) e aplica a root app
+│   ├── set-github-secrets.sh       # Copia as credenciais do Academy para o environment "aws academy"
 │   ├── verify.sh                   # Confere os recursos criados na AWS
 │   └── check-orphans.sh            # Procura recursos esquecidos após o destroy
 └── .github/workflows/
@@ -134,6 +139,8 @@ terraform apply      # ~15 min
 terraform destroy
 bash scripts/check-orphans.sh
 ```
+
+**Driver EBS CSI:** o módulo `eks` instala o addon `aws-ebs-csi-driver`, que cria os discos pedidos pelos volumes do Kubernetes (ex.: Loki). Esses discos são criados pelo Kubernetes, não pelo Terraform: o `check-orphans.sh` aponta os que sobrarem após o `destroy`.
 
 ---
 
@@ -165,12 +172,18 @@ lint ──────────┘    Trivy SCA + gosec/bandit   Trivy image
 
 O ArgoCD monitora `gitops/` e sincroniza automaticamente (`automated`, `prune`, `selfHeal`).
 
-> **Estado atual (herdado da Fase 3):** o ArgoCD e as Applications são aplicados manualmente. Na etapa 2 eles passam a ser declarativos (app-of-apps), que é a porta de entrada da stack de observabilidade.
+O ArgoCD usa o padrão **app-of-apps**: a `root` (`gitops/root-app.yaml`) observa `gitops/apps/` e cria as demais Applications. Para colocar algo novo no cluster, basta criar um arquivo em `gitops/apps/` e fazer commit.
+
+| Application | O que instala | Namespace |
+|---|---|---|
+| auth, flag, targeting, evaluation, analytics | Os 5 microsserviços (`gitops/services/`) | togglemaster |
+| kube-prometheus-stack | Prometheus, Grafana, node-exporter, kube-state-metrics (chart 92.17.0) | observability |
+| loki | Loki em modo SingleBinary, com disco EBS (chart 6.55.0) | observability |
+| platform-storage | StorageClass `ebs-sc` (gp3) | — (cluster) |
 
 ```bash
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl apply -f gitops/argocd/applications.yaml
+# Instala o ArgoCD (versão fixa no script) e aplica a root app
+bash scripts/install-argocd.sh
 
 # Interface web
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
