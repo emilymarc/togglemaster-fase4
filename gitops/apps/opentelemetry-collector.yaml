@@ -1,0 +1,32 @@
+# como ler: ArgoCD instale [repoURL] em [destination]. Use [values] como descrição de como a instalação deve ser, o arquivo de detalhes está em [valuesFiles]
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opentelemetry-collector
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+      chart: opentelemetry-collector
+      targetRevision: 0.178.2
+      helm:
+        valueFiles:
+          - $values/gitops/platform/values/opentelemetry-collector.yaml
+    - repoURL: https://github.com/emilymarc/togglemaster-fase4
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+
+prometheus:
+  prometheusSpec:
+    enableRemoteWriteReceiver: true 
