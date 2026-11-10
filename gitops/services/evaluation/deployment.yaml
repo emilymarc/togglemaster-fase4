@@ -1,3 +1,4 @@
+# como ler: Deployment [name] roda a imagem [image] com as variáveis [env]; o Service [name] expõe a porta [port] dentro do cluster
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,11 +29,19 @@ spec:
               value: "http://flag:8002"
             - name: TARGETING_SERVICE_URL
               value: "http://targeting:8003"
-            - name: API_KEY
+            - name: SERVICE_API_KEY        # nome que o código lê; chave criada no auth-service (POST /admin/keys)
               valueFrom:
                 secretKeyRef:
                   name: togglemaster-secrets
-                  key: MASTER_KEY
+                  key: SERVICE_API_KEY
+                  optional: true           # o pod sobe mesmo antes da chave existir no Secret
+            - name: AWS_SQS_URL            # fila para onde o evaluation envia os eventos
+              valueFrom:
+                secretKeyRef:
+                  name: togglemaster-secrets
+                  key: SQS_QUEUE_URL
+            - name: AWS_REGION
+              value: "us-east-1"
 ---
 apiVersion: v1
 kind: Service
