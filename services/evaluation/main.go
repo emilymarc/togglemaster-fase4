@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"otelhttp"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,10 +15,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Contexto global para o Redis
+// para o Redis
 var ctx = context.Background()
 
-// App struct para injeção de dependência
+// --- OpenTelemetry ---
+shutdownOTel, err := setupOTel(ctx)
+if err != nil {
+	log.Fatalf("Não foi possível iniciar o OpenTelemetry: %v", err)
+}
+defer shutdownOTel(ctx)
+
 type App struct {
 	RedisClient         *redis.Client
 	SqsSvc              *sqs.SQS
