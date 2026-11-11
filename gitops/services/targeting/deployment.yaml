@@ -1,3 +1,4 @@
+# como ler: Deployment [name] roda a imagem [image] com as variáveis [env]; o Service [name] expõe a porta [port] dentro do cluster
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,6 +25,21 @@ spec:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: TARGETING_DATABASE_URL
+            - name: AUTH_SERVICE_URL       # o código encerra na inicialização sem esta variável
+              value: "http://auth:8001"
+            # OpenTelemetry: nome do serviço, endereço do Collector e tipos de dado enviados
+            - name: OTEL_SERVICE_NAME
+              value: targeting-service
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://opentelemetry-collector.observability.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_LOGS_EXPORTER
+              value: none                 # os logs já chegam ao Loki pelo filelog do Collector
 ---
 apiVersion: v1
 kind: Service

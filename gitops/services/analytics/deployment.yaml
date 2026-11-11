@@ -1,3 +1,4 @@
+# como ler: Deployment [name] roda a imagem [image] com as variáveis [env]; o Service [name] expõe a porta [port] dentro do cluster
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,15 +20,30 @@ spec:
           ports:
             - containerPort: 8005
           env:
-            - name: DYNAMODB_TABLE_NAME
+            - name: AWS_DYNAMODB_TABLE     # nome que o código lê (antes: DYNAMODB_TABLE_NAME)
               value: "ToggleMasterAnalytics"
-            - name: SQS_QUEUE_URL
+            - name: AWS_SQS_URL            # nome que o código lê (antes: SQS_QUEUE_URL)
               valueFrom:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: SQS_QUEUE_URL
             - name: AWS_DEFAULT_REGION
               value: "us-east-1"
+            - name: AWS_REGION             # nome que o código lê
+              value: "us-east-1"
+            # OpenTelemetry: nome do serviço, endereço do Collector e tipos de dado enviados
+            - name: OTEL_SERVICE_NAME
+              value: analytics-service
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://opentelemetry-collector.observability.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_LOGS_EXPORTER
+              value: none                 # os logs já chegam ao Loki pelo filelog do Collector
 ---
 apiVersion: v1
 kind: Service
