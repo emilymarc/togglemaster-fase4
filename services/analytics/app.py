@@ -7,8 +7,13 @@ import time
 import logging
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+from opentelemetry import trace, propagate
+from opentelemetry.trace import SpanKind
 from flask import Flask, jsonify
 from dotenv import load_dotenv
+
+
+tracer = trace.get_tracer("analytics-service")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
@@ -89,11 +94,11 @@ def sqs_worker_loop():
     log.info("Iniciando o worker SQS...")
     while True:
         try:
-            # Long-polling: espera até 20s por mensagens
             response = sqs_client.receive_message(
                 QueueUrl=SQS_QUEUE_URL,
-                MaxNumberOfMessages=10,  # Processa em lotes de até 10
-                WaitTimeSeconds=20
+                MaxNumberOfMessages=10,
+                WaitTimeSeconds=20,
+                MessageAttributeNames=['All']   # o traceparent vem do evaluation
             )
             
             messages = response.get('Messages', [])

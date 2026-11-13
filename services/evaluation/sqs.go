@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"context"
+	
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -18,9 +23,25 @@ type EvaluationEvent struct {
 }
 
 // sendEvaluationEvent envia um evento para a fila SQS
-func (a *App) sendEvaluationEvent(userID, flagName string, result bool) {
-	// Se a URL da fila não foi configurada, apenas loga localmente e sai.
+func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, result bool) {
+	
 	if a.SqsSvc == nil || a.SqsQueueURL == "" {
+	// Span de envio para a queue
+	ctx, span := otel.Tracer("evaluation-service").Start(ctx, "sqs send evaluation-event",
+		trace.WithSpanKind(trace.SpanKindProducer))
+	defer span.End()
+
+	// grava o traceparent num mapa e converte para atributos da mensagem SQS (propagation)
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+	attrs := map[string]*sqs.MessageAttributeValue{}
+	for key, value := range carrier {
+		attrs[key] = &sqs.MessageAttributeValue{
+			DataType:    aws.String("String"),
+			StringValue: aws.String(value),
+		}
+	}
+
 		log.Printf("[SQS_DISABLED] Evento: User '%s', Flag '%s', Result '%t'", userID, flagName, result)
 		return
 	}
@@ -39,9 +60,10 @@ func (a *App) sendEvaluationEvent(userID, flagName string, result bool) {
 	}
 
 	// Envia a mensagem
-	_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(body)),
-		QueueUrl:    aws.String(a.SqsQueueURL),
+		_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
+		MessageBody:       aws.String(string(body)),
+		QueueUrl:          aws.String(a.SqsQueueURL),
+		MessageAttributes: attrs, // o traceparent vai junto com a msg
 	})
 
 	if err != nil {
