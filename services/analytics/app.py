@@ -7,8 +7,13 @@ import time
 import logging
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+from opentelemetry import trace, propagate
+from opentelemetry.trace import SpanKind
 from flask import Flask, jsonify
 from dotenv import load_dotenv
+
+
+tracer = trace.get_tracer("analytics-service")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
@@ -89,11 +94,11 @@ def sqs_worker_loop():
     log.info("Iniciando o worker SQS...")
     while True:
         try:
-            # Long-polling: espera até 20s por mensagens
             response = sqs_client.receive_message(
                 QueueUrl=SQS_QUEUE_URL,
-                MaxNumberOfMessages=10,  # Processa em lotes de até 10
-                WaitTimeSeconds=20
+                MaxNumberOfMessages=10,
+                WaitTimeSeconds=20,
+                MessageAttributeNames=['All']   # o traceparent vem do evaluation
             )
             
             messages = response.get('Messages', [])
@@ -104,7 +109,12 @@ def sqs_worker_loop():
             log.info(f"Recebidas {len(messages)} mensagens.")
             
             for message in messages:
-                process_message(message)
+                # Lê o traceparent que tá nos atributos e leva o trace do evaluation
+                carrier = {k: v.get('StringValue', '') for k, v in message.get('MessageAttributes', {}).items()}
+                ctx = propagate.extract(carrier)
+                
+                with tracer.start_as_current_span("sqs process evaluation-event", context=ctx, kind=SpanKind.CONSUMER):
+                    process_message(message)
                 
         except ClientError as e:
             log.error(f"Erro do Boto3 no loop principal do SQS: {e}")
