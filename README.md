@@ -29,14 +29,15 @@ ToggleMaster é uma plataforma de **feature flags** com 5 microsserviços, impla
 |-------|-----------|--------|
 | 0 | Repositório da Fase 4 a partir da base da Fase 3 | ✅ Concluída |
 | — | CI: permissões do `GITHUB_TOKEN`, gosec travado, environment `aws academy`, varredura de segredos (Trivy) | ✅ Concluída |
-| 1 | Contas gratuitas: New Relic, PagerDuty, Discord | ⏳ Em andamento |
+| 1 | Contas gratuitas: New Relic, PagerDuty (Events API v2), Discord (webhook `#alertas`) | ✅ Concluída |
 | 2 | GitOps da plataforma: ArgoCD versionado + app-of-apps | ✅ Concluída (validar no EKS) |
 | 3 | Laboratório local de observabilidade (docker-compose) | ⬜ Planejada |
-| 4 | Instrumentação OpenTelemetry dos 5 serviços | ⬜ Planejada |
-| 5 | Dashboard do Grafana e regras de alerta | ⬜ Planejada |
+| 4 | Instrumentação OpenTelemetry dos 5 serviços (Python automática, Go manual, trace pelo SQS) — requisito 3 | ✅ Concluída (validar no EKS) |
+| 5 | Dashboard do Grafana como código (ConfigMap) | ⏳ Em andamento |
+| 5 | Regra de alerta (5xx do auth > 5%) e contact points PagerDuty + Discord — requisito 4 | ⬜ Planejada |
 | 6 | Self-healing: GitHub Action disparada pelo alerta (`repository_dispatch`) | ⬜ Planejada |
 | 7 | Helm charts no GitOps: Prometheus, Grafana e Loki (requisito 1) | ✅ Concluída (validar no EKS) |
-| 7 | Helm chart no GitOps: OTel Collector (requisito 2) | ⏳ Em andamento |
+| 7 | Helm chart no GitOps: OTel Collector (requisito 2) | ✅ Concluída (validar no EKS) |
 | 8–9 | Sessões no EKS: integração, gravação e evidências | ⬜ Planejada |
 
 ---
@@ -104,9 +105,10 @@ Fluxo de telemetria e resposta (alvo da Fase 4):
 ├── services/                       # auth, evaluation (Go) · flag, targeting, analytics (Python)
 ├── gitops/
 │   ├── root-app.yaml               # Root app (app-of-apps), aplicada uma única vez
-│   ├── apps/                       # Uma Application por componente (serviços, Prometheus, Loki, storage)
+│   ├── apps/                       # Uma Application por componente (serviços, Prometheus, Loki, Collector, storage, dashboards)
 │   ├── platform/values/            # values dos Helm charts
 │   ├── platform/storage/           # StorageClass ebs-sc (discos EBS gp3)
+│   ├── platform/dashboards/        # Dashboards do Grafana como ConfigMap
 │   └── services/<svc>/deployment.yaml
 ├── scripts/
 │   ├── install-argocd.sh           # Instala o ArgoCD (versão fixa) e aplica a root app
@@ -179,7 +181,9 @@ O ArgoCD usa o padrão **app-of-apps**: a `root` (`gitops/root-app.yaml`) observ
 | auth, flag, targeting, evaluation, analytics | Os 5 microsserviços (`gitops/services/`) | togglemaster |
 | kube-prometheus-stack | Prometheus, Grafana, node-exporter, kube-state-metrics (chart 92.17.0) | observability |
 | loki | Loki em modo SingleBinary, com disco EBS (chart 6.55.0) | observability |
+| opentelemetry-collector | OTel Collector em modo DaemonSet (chart 0.178.2) | observability |
 | platform-storage | StorageClass `ebs-sc` (gp3) | — (cluster) |
+| platform-dashboards | Dashboard "ToggleMaster · Visão geral" (ConfigMap lido pelo sidecar do Grafana) | observability |
 
 ```bash
 # Instala o ArgoCD (versão fixa no script) e aplica a root app
@@ -188,6 +192,46 @@ bash scripts/install-argocd.sh
 # Interface web
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
 kubectl port-forward svc/argocd-server -n argocd 8080:443   # https://localhost:8080 (admin)
+```
+
+---
+
+## Observabilidade
+
+### OpenTelemetry Collector (peça central)
+
+Os serviços enviam traces e métricas só para o Collector (`opentelemetry-collector.observability:4317`, OTLP gRPC). O Collector também lê os logs dos contêineres direto dos nós (preset `logsCollection`) e marca cada dado com namespace, pod e deployment (preset `kubernetesAttributes`).
+
+| Sinal | Destino | Exporter |
+|---|---|---|
+| Traces | New Relic | `otlp/newrelic` |
+| Métricas | Prometheus (remote write) e New Relic | `prometheusremotewrite`, `otlp/newrelic` |
+| Logs | Loki | `otlphttp/loki` |
+
+A license key do New Relic fica num Secret do cluster, nunca no Git:
+
+```bash
+kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n observability create secret generic newrelic-license --from-literal=license-key=<NEW_RELIC_LICENSE_KEY>
+```
+
+### Instrumentação dos serviços
+
+| Serviço | Tipo | Como |
+|---|---|---|
+| flag, targeting, analytics (Python) | Automática | `opentelemetry-distro` + `opentelemetry-bootstrap -a install` no Dockerfile; o contêiner sobe com `opentelemetry-instrument gunicorn ...` |
+| auth, evaluation (Go) | Manual | `telemetry.go` cria TracerProvider/MeterProvider (OTLP gRPC); `otelhttp.NewHandler` no servidor e `otelhttp.NewTransport` no cliente HTTP |
+| evaluation → analytics (SQS) | Propagação manual | O evaluation grava o `traceparent` nos `MessageAttributes` da mensagem (span *producer*); o analytics lê e continua o mesmo trace (span *consumer*) |
+
+As variáveis `OTEL_SERVICE_NAME` e `OTEL_EXPORTER_OTLP_ENDPOINT` ficam nos `deployment.yaml` de cada serviço.
+
+### Dashboard como código
+
+`gitops/platform/dashboards/togglemaster-dashboard.yaml` é um ConfigMap com o label `grafana_dashboard: "1"`; o sidecar do Grafana o carrega automaticamente. Painéis: CPU e memória por nó e por pod, requisições por segundo por serviço, taxa de 5xx do auth e logs ao vivo do namespace `togglemaster` (com busca).
+
+```bash
+kubectl -n observability get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d && echo
+kubectl -n observability port-forward svc/kube-prometheus-stack-grafana 3000:80   # http://localhost:3000 (admin)
 ```
 
 ---
