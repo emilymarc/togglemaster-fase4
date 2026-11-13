@@ -61,9 +61,9 @@ func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, 
 
 	// Envia a mensagem
 		_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
-		MessageBody:       aws.String(string(body)),
-		QueueUrl:          aws.String(a.SqsQueueURL),
-		MessageAttributes: attrs, // o traceparent vai junto com a msg
+		MessageBody: aws.String(string(body)),
+		QueueUrl: aws.String(a.SqsQueueURL),
+		MessageAttributes: attrs // o traceparent vai junto com a msg
 	})
 
 	if err != nil {
