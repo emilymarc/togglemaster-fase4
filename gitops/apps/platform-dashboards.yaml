@@ -1,18 +1,19 @@
-# como ler: ArgoCD esta aplicação [name] está em [path] será aplicada em [destination]. StorageClass vale para o cluster inteiro, por isso não há namespace
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: platform-dashboards
-  namespace: observability
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/emilymarc/togglemaster-fase4
-    targetRevision: main
-    path: gitops/platform/platform-dashboards
-  destination:
-    server: https://kubernetes.default.svc
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+   # como ler: ArgoCD esta aplicação [name] está em [path] será aplicada em [destination]. Os ConfigMaps de dashboard vão para o namespace do Grafana
+   apiVersion: argoproj.io/v1alpha1
+   kind: Application
+   metadata:
+     name: platform-dashboards
+     namespace: argocd            # onde o ArgoCD procura as Applications
+   spec:
+     project: default
+     source:
+       repoURL: https://github.com/emilymarc/togglemaster-fase4
+       targetRevision: main
+       path: gitops/platform/dashboards
+     destination:
+       server: https://kubernetes.default.svc
+       namespace: observability   # onde o Grafana e o sidecar estão
+     syncPolicy:
+       automated:
+         prune: true
+         selfHeal: true

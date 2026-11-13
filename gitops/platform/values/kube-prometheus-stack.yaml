@@ -6,7 +6,9 @@ prometheus:
   prometheusSpec:
     enableRemoteWriteReceiver: true   # aceita as métricas que o Collector empurra
     retention: 2d
-
+    resources:
+      requests:
+        memory: 400Mi
 grafana:
   additionalDataSources:
     - name: Loki
