@@ -3,7 +3,7 @@
 > POSTECH Tech Challenge — Pós-Tech Cloud Architecture and DevOps
 > Fase 4: monitoramento open source no Kubernetes, padronização com OpenTelemetry, APM com tracing distribuído, alertas inteligentes e automação de resposta a incidentes.
 >
-> **Status:** em andamento. Diagrama de arquitetura e relatório em [`_Entregáveis/`](_Entregáveis/).
+> Diagrama de arquitetura e relatório em [`_Entregáveis/`](_Entregáveis/).
 
 ---
 
@@ -23,30 +23,25 @@ ToggleMaster é uma plataforma de **feature flags** com 5 microsserviços, impla
 
 ---
 
-## Status da Fase 4
+## Como usar (passo a passo)
 
-| Etapa | Descrição | Status |
-|-------|-----------|--------|
-| 0 | Repositório da Fase 4 a partir da base da Fase 3 | ✅ Concluída |
-| — | CI: permissões do `GITHUB_TOKEN`, gosec travado, environment `aws academy`, varredura de segredos (Trivy) | ✅ Concluída |
-| 1 | Contas gratuitas: New Relic, PagerDuty (Events API v2), Discord (webhook `#alertas`) | ✅ Concluída |
-| 2 | GitOps da plataforma: ArgoCD versionado + app-of-apps | ✅ Concluída (validar no EKS) |
-| 3 | Laboratório local de observabilidade (docker-compose) | ⬜ Planejada |
-| 4 | Instrumentação OpenTelemetry dos 5 serviços (Python automática, Go manual, trace pelo SQS) — requisito 3 | ✅ Concluída (validar no EKS) |
-| 5 | Dashboard do Grafana como código (ConfigMap) | ⏳ Em andamento |
-| 5 | Regra de alerta (5xx do auth > 5%) e contact points PagerDuty + Discord — requisito 4 | ⬜ Planejada |
-| 6 | Self-healing: GitHub Action disparada pelo alerta (`repository_dispatch`) | ⬜ Planejada |
-| 7 | Helm charts no GitOps: Prometheus, Grafana e Loki (requisito 1) | ✅ Concluída (validar no EKS) |
-| 7 | Helm chart no GitOps: OTel Collector (requisito 2) | ✅ Concluída (validar no EKS) |
-| 8–9 | Sessões no EKS: integração, gravação e evidências | ⬜ Planejada |
+Ordem de uma sessão completa, do zero até os dashboards:
+
+1. **Credenciais:** inicie o lab do AWS Academy e copie as credenciais para o terminal (`aws configure` ou variáveis `AWS_*`).
+2. **Infraestrutura:** `cd infra && terraform init && terraform apply` (~15 min).
+3. **Acesso ao cluster:** `aws eks update-kubeconfig --region us-east-1 --name <cluster-name>`.
+4. **Secrets do cluster** (nunca vão para o Git): `togglemaster-secrets` (namespace `togglemaster`) e `newrelic-license` (namespace `observability`). Ver [Observabilidade](#observabilidade).
+5. **GitOps:** `bash scripts/install-argocd.sh`. O ArgoCD instala os 5 serviços e toda a stack de observabilidade a partir de `gitops/`.
+6. **Explorar:** ArgoCD (`localhost:8080`), Grafana (`localhost:3000`) e New Relic (traces e service map). Comandos de acesso nas seções abaixo.
+7. **Encerrar:** `terraform destroy` e `bash scripts/check-orphans.sh`.
 
 ---
 
 ## Arquitetura
 
-O diagrama completo, com o que já está implementado e o que está planejado, está em [`_Entregáveis/togglemaster-arquitetura-fase4.html`](_Entregáveis/togglemaster-arquitetura-fase4.html).
+O diagrama completo está em [`_Entregáveis/togglemaster-arquitetura-fase4.html`](_Entregáveis/togglemaster-arquitetura-fase4.html).
 
-Fluxo de telemetria e resposta (alvo da Fase 4):
+Fluxo de telemetria e resposta a incidentes:
 
 ```
  Microsserviços (SDK OTel) ──OTLP──▶ ┌──────────────────┐ ──▶ New Relic (traces, service map)
@@ -240,7 +235,7 @@ kubectl -n observability port-forward svc/kube-prometheus-stack-grafana 3000:80 
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.6
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) e [AWS CLI](https://aws.amazon.com/cli/) v2
-- [Docker](https://www.docker.com/) (laboratório local de observabilidade)
+- [Docker](https://www.docker.com/) (build e teste local das imagens)
 - [GitHub CLI](https://cli.github.com/) (renovação dos secrets)
 - Acesso ao cluster: `aws eks update-kubeconfig --region us-east-1 --name <cluster-name>`
 

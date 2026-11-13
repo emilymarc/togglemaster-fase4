@@ -9,9 +9,55 @@ prometheus:
     resources:
       requests:
         memory: 400Mi
+
 grafana:
   additionalDataSources:
     - name: Loki
       uid: loki                       # o dashboard procura o Loki por este id
       type: loki
       url: http://loki-gateway.observability.svc.cluster.local
+  # alert as a code: o Grafana lê este arquivo qdo sobe
+  alerting:
+    rules.yaml:
+      apiVersion: 1
+      groups:
+        - orgId: 1
+          name: togglemaster
+          folder: ToggleMaster
+          interval: 1m                      # avalia a regra a cada 1 minuto
+          rules:
+            - uid: auth-5xx-rate
+              title: "auth-service: erros 5xx acima de 5%"
+              condition: acima_do_limite    # quem decide se dispara
+              data:
+                - refId: taxa_5xx
+                  datasourceUid: prometheus
+                  relativeTimeRange: { from: 300, to: 0 }
+                  model:
+                    refId: taxa_5xx
+                    instant: true
+                    expr: |
+                      100 * (
+                        sum(rate(http_server_request_duration_seconds_count{job="auth-service", http_response_status_code=~"5.."}[5m]))
+                        or sum(rate(http_server_duration_milliseconds_count{job="auth-service", http_status_code=~"5.."}[5m]))
+                      ) / (
+                        sum(rate(http_server_request_duration_seconds_count{job="auth-service"}[5m]))
+                        or sum(rate(http_server_duration_milliseconds_count{job="auth-service"}[5m]))
+                      )
+                - refId: acima_do_limite    # a decisão: taxa_5xx > 5
+                  datasourceUid: __expr__     # calculado pelo próprio Grafana (Expressions)
+                  model:
+                    refId: acima_do_limite
+                    type: threshold
+                    expression: taxa_5xx
+                    conditions:
+                      - evaluator: { type: gt, params: [5] }
+              for: 2m                       # precisa ficar acima de 5% por 2 minutos seguidos
+              noDataState: OK               # sem tráfego não é incidente
+              execErrState: Error
+              labels:                       # as labels decidem para onde o alerta vai
+                severity: critical
+                service: auth
+              annotations:
+                summary: '{{`{{ printf "%.1f" $values.taxa_5xx.Value }}`}}% de respostas 5xx no auth-service'
+                description: "Mais de 5% das requisições do auth-service retornaram erro 5xx nos últimos 5 minutos."
