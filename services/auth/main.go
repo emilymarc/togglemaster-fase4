@@ -1,26 +1,37 @@
 package main
 
+
+
 import (
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"context"
 
 	"github.com/joho/godotenv"
 	_ "github.com/jackc/pgx/v4/stdlib"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-// App struct (para injeção de dependência)
+// App struct = injeção de dependência
 type App struct {
 	DB         *sql.DB
 	MasterKey  string
 }
 
 func main() {
-	// Carrega o .env para desenvolvimento local. Em produção, isso não fará nada.
 	_ = godotenv.Load()
 
-	// --- Configuração ---
+   	// --- openTelemetry ---
+   	otelCtx := context.Background()
+   	shutdownOTel, err := setupOTel(otelCtx)
+   	if err != nil {
+   		log.Fatalf("Não foi possível iniciar o OpenTelemetry: %v", err)
+   	}
+   	defer shutdownOTel(otelCtx)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8001" // Porta padrão
@@ -55,16 +66,15 @@ func main() {
 	mux.HandleFunc("/validate", app.validateKeyHandler)
 
 	// Endpoints de "admin" para criar/gerenciar chaves
-	// Eles são protegidos pelo middleware de autenticação
 	mux.Handle("/admin/keys", app.masterKeyAuthMiddleware(http.HandlerFunc(app.createKeyHandler)))
 
-	log.Printf("Serviço de Autenticação (Go) rodando na porta %s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatal(err)
-	}
+   	log.Printf("Serviço de Autenticação (Go) rodando na porta %s", port)
+   	if err := http.ListenAndServe(":"+port, otelhttp.NewHandler(mux, "auth-service")); err != nil {
+   		log.Fatal(err)
+   	}
 }
 
-// connectDB inicializa e testa a conexão com o PostgreSQL
+// connectDB inicializa e testa a conexão com PostgreSQL
 func connectDB(databaseURL string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", databaseURL)
 	if err != nil {
