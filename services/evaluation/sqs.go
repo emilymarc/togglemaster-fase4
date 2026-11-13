@@ -24,8 +24,6 @@ type EvaluationEvent struct {
 
 // sendEvaluationEvent envia um evento para a fila SQS
 func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, result bool) {
-	
-	if a.SqsSvc == nil || a.SqsQueueURL == "" {
 	// Span de envio para a queue
 	ctx, span := otel.Tracer("evaluation-service").Start(ctx, "sqs send evaluation-event",
 		trace.WithSpanKind(trace.SpanKindProducer))
@@ -42,6 +40,7 @@ func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, 
 		}
 	}
 
+	if a.SqsSvc == nil || a.SqsQueueURL == "" {
 		log.Printf("[SQS_DISABLED] Evento: User '%s', Flag '%s', Result '%t'", userID, flagName, result)
 		return
 	}
@@ -60,10 +59,10 @@ func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, 
 	}
 
 	// Envia a mensagem
-		_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
+	_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
 		MessageBody: aws.String(string(body)),
 		QueueUrl: aws.String(a.SqsQueueURL),
-		MessageAttributes: attrs // o traceparent vai junto com a msg
+		MessageAttributes: attrs, // o traceparent vai junto com a msg
 	})
 
 	if err != nil {
