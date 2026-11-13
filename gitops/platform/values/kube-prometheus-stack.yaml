@@ -4,13 +4,12 @@ alertmanager:
 
 prometheus:
   prometheusSpec:
+    enableRemoteWriteReceiver: true   # aceita as métricas que o Collector empurra
     retention: 2d
-    resources:
-      requests:
-        memory: 400Mi
 
 grafana:
   additionalDataSources:
     - name: Loki
+      uid: loki                       # o dashboard procura o Loki por este id
       type: loki
-      url: http://loki-gateway.observability.svc.cluster.local # analiza ele mesmo e manda para Gragana
+      url: http://loki-gateway.observability.svc.cluster.local

@@ -1,0 +1,18 @@
+# como ler: ArgoCD esta aplicação [name] está em [path] será aplicada em [destination]. StorageClass vale para o cluster inteiro, por isso não há namespace
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-dashboards
+  namespace: observability
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/emilymarc/togglemaster-fase4
+    targetRevision: main
+    path: gitops/platform/platform-dashboards
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
