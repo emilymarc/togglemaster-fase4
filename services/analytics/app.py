@@ -109,7 +109,12 @@ def sqs_worker_loop():
             log.info(f"Recebidas {len(messages)} mensagens.")
             
             for message in messages:
-                process_message(message)
+                # Lê o traceparent que tá nos atributos e leva o trace do evaluation
+                carrier = {k: v.get('StringValue', '') for k, v in message.get('MessageAttributes', {}).items()}
+                ctx = propagate.extract(carrier)
+                
+                with tracer.start_as_current_span("sqs process evaluation-event", context=ctx, kind=SpanKind.CONSUMER):
+                    process_message(message)
                 
         except ClientError as e:
             log.error(f"Erro do Boto3 no loop principal do SQS: {e}")
