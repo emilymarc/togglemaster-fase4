@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"time"
-	"context"
-	
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
@@ -24,7 +24,7 @@ type EvaluationEvent struct {
 
 // sendEvaluationEvent envia um evento para a fila SQS
 func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, result bool) {
-	// Span de envio para a queue
+	// span do tipo producer: marca o envio da mensagem para a fila
 	ctx, span := otel.Tracer("evaluation-service").Start(ctx, "sqs send evaluation-event",
 		trace.WithSpanKind(trace.SpanKindProducer))
 	defer span.End()
@@ -60,8 +60,8 @@ func (a *App) sendEvaluationEvent(ctx context.Context, userID, flagName string, 
 
 	// Envia a mensagem
 	_, err = a.SqsSvc.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(body)),
-		QueueUrl: aws.String(a.SqsQueueURL),
+		MessageBody:       aws.String(string(body)),
+		QueueUrl:          aws.String(a.SqsQueueURL),
 		MessageAttributes: attrs, // o traceparent vai junto com a msg
 	})
 

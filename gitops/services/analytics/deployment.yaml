@@ -20,16 +20,16 @@ spec:
           ports:
             - containerPort: 8005
           env:
-            - name: AWS_DYNAMODB_TABLE     # nome que o código lê (antes: DYNAMODB_TABLE_NAME)
+            - name: AWS_DYNAMODB_TABLE
               value: "ToggleMasterAnalytics"
-            - name: AWS_SQS_URL            # nome que o código lê (antes: SQS_QUEUE_URL)
+            - name: AWS_SQS_URL
               valueFrom:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: SQS_QUEUE_URL
             - name: AWS_DEFAULT_REGION
               value: "us-east-1"
-            - name: AWS_REGION             # nome que o código lê
+            - name: AWS_REGION
               value: "us-east-1"
             # OpenTelemetry: nome do serviço, endereço do Collector e tipos de dado enviados
             - name: OTEL_SERVICE_NAME

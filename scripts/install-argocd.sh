@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSAO="v3.5.6"   # troque pela versão que o comando curl mostrou
+VERSAO="v3.5.6"   # versão fixa do ArgoCD
 
 # 1. Cria o namespace do ArgoCD
 kubectl create namespace argocd

@@ -31,7 +31,7 @@ spec:
                   key: MASTER_KEY
             # OpenTelemetry: nome do serviço e endereço do Collector
             - name: OTEL_SERVICE_NAME
-              value: auth-service            # no evaluation: evaluation-service
+              value: auth-service
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://opentelemetry-collector.observability.svc.cluster.local:4317
 

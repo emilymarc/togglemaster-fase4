@@ -17,7 +17,7 @@ extraEnvs:
   - name: NEW_RELIC_LICENSE_KEY
     valueFrom:
       secretKeyRef:
-        name: newrelic-license     # secret criado manual no EKS
+        name: newrelic-license     # Secret criado com kubectl no cluster, fora do Git
         key: license-key
 
 config:

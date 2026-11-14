@@ -13,15 +13,15 @@ import (
 )
 
 func setupOTel(ctx context.Context) (func(context.Context) error, error) {
-	// Traces para Collector
+	// traces: agrupados em lotes e enviados ao Collector (OTLP gRPC)
 	traceExporter, err := otlptracegrpc.New(ctx)
 	if err != nil {
 		return nil, err
 	}
 	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(traceExporter))
-	otel.SetTracerProvider(tracerProvider) // envio em batch
+	otel.SetTracerProvider(tracerProvider)
 
-	// Métricas
+	// métricas: lidas a cada 60s e enviadas ao Collector
 	metricExporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
 		return nil, err
@@ -29,9 +29,9 @@ func setupOTel(ctx context.Context) (func(context.Context) error, error) {
 	meterProvider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)),
 	)
-	otel.SetMeterProvider(meterProvider) // 60s em 60s (standard)
+	otel.SetMeterProvider(meterProvider)
 
-	// escreve traceparent nas chamadas HTTP
+	// propagação: lê e escreve o traceparent entre os serviços
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{}, propagation.Baggage{},
 	))
