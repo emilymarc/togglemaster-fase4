@@ -1,0 +1,54 @@
+# como ler: quando o Grafana envia [repository_dispatch] do tipo [grafana-alert], o job entra no cluster e reinicia o deployment do serviço com problema
+name: self-healing
+
+on:
+  repository_dispatch:
+    types: [grafana-alert]
+  workflow_dispatch:                 # execução manual, pela aba Actions
+    inputs:
+      service:
+        description: Deployment a reiniciar
+        default: auth
+
+permissions:
+  contents: read
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    environment: aws academy
+    env:
+      CLUSTER: togglemaster-cluster
+      NAMESPACE: togglemaster
+      # dados de fora entram por variável de ambiente, nunca direto no script
+      SERVICE: ${{ github.event.client_payload.service || inputs.service || 'auth' }}
+      ALERT: ${{ github.event.client_payload.alertname || 'execução manual' }}
+    steps:
+      - name: Alerta recebido
+        run: |
+          echo "Alerta:  $ALERT"
+          echo "Serviço: $SERVICE"
+
+      - name: Validar o serviço
+        run: |
+          case "$SERVICE" in
+            auth|flag|targeting|evaluation|analytics) ;;
+            *) echo "Serviço desconhecido: $SERVICE"; exit 1 ;;
+          esac
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Conectar ao cluster
+        run: aws eks update-kubeconfig --region us-east-1 --name "$CLUSTER"
+
+      - name: Reiniciar o deployment
+        run: |
+          kubectl -n "$NAMESPACE" rollout restart deployment/"$SERVICE"
+          kubectl -n "$NAMESPACE" rollout status deployment/"$SERVICE" --timeout=180s
+          kubectl -n "$NAMESPACE" get pods -l app="$SERVICE"
