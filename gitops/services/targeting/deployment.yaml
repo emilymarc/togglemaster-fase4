@@ -25,7 +25,7 @@ spec:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: TARGETING_DATABASE_URL
-            - name: AUTH_SERVICE_URL       # o código encerra na inicialização sem esta variável
+            - name: AUTH_SERVICE_URL
               value: "http://auth:8001"
             # OpenTelemetry: nome do serviço, endereço do Collector e tipos de dado enviados
             - name: OTEL_SERVICE_NAME

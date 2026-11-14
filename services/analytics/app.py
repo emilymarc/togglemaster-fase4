@@ -109,7 +109,7 @@ def sqs_worker_loop():
             log.info(f"Recebidas {len(messages)} mensagens.")
             
             for message in messages:
-                # Lê o traceparent que tá nos atributos e leva o trace do evaluation
+                # lê o traceparent dos atributos e continua o trace iniciado no evaluation
                 carrier = {k: v.get('StringValue', '') for k, v in message.get('MessageAttributes', {}).items()}
                 ctx = propagate.extract(carrier)
                 

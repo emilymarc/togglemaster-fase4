@@ -45,7 +45,6 @@ func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. Enviar evento para SQS (assincronamente)
-	// msg+trace
 	go a.sendEvaluationEvent(r.Context(), userID, flagName, result)
 
 	// 4. Retornar a resposta

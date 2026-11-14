@@ -29,22 +29,22 @@ spec:
               value: "http://flag:8002"
             - name: TARGETING_SERVICE_URL
               value: "http://targeting:8003"
-            - name: SERVICE_API_KEY        # nome que o código lê; chave criada no auth-service (POST /admin/keys)
+            - name: SERVICE_API_KEY        # chave criada no auth-service (POST /admin/keys)
               valueFrom:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: SERVICE_API_KEY
-                  optional: true           # true = pod sobe sem chave no Secret
-            - name: AWS_SQS_URL            # fila que evaluation envia os eventos
+                  optional: true           # o pod sobe mesmo sem a chave no Secret
+            - name: AWS_SQS_URL
               valueFrom:
                 secretKeyRef:
                   name: togglemaster-secrets
                   key: SQS_QUEUE_URL
             - name: AWS_REGION
               value: "us-east-1"
-                        # OpenTelemetry: nome do serviço e endereço do Collector
+            # OpenTelemetry: nome do serviço e endereço do Collector
             - name: OTEL_SERVICE_NAME
-              value: auth-service            # no evaluation: evaluation-service
+              value: evaluation-service
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://opentelemetry-collector.observability.svc.cluster.local:4317
 ---
