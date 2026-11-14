@@ -1,4 +1,5 @@
-# como ler: quando o Grafana envia [repository_dispatch] do tipo [grafana-alert], o job entra no cluster e reinicia o deployment do serviço com problema
+# como ler: workflow de operação, fora da pipeline de CI. Gatilho [on]: repository_dispatch do tipo [grafana-alert], enviado pelo webhook do Grafana quando o alerta dispara, ou execução manual [workflow_dispatch]. O job entra no cluster e reinicia o deployment indicado em [client_payload.service]
+
 name: self-healing
 
 on:
