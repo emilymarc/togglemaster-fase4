@@ -37,6 +37,16 @@ grafana:
               type: discord
               settings:
                 url: ${DISCORD_WEBHOOK_URL}
+            - uid: github-self-healing
+              type: webhook
+              disableResolveMessage: true     # reinicia só quando dispara, não quando resolve
+              settings:
+                url: https://api.github.com/repos/emilymarc/togglemaster-fase4/dispatches
+                httpMethod: POST
+                authorization_scheme: Bearer
+                authorization_credentials: ${GITHUB_DISPATCH_TOKEN}
+                payload:
+                  template: '{{`{"event_type":"grafana-alert","client_payload":{"alertname":"{{ .CommonLabels.alertname }}","service":"{{ .CommonLabels.service }}"}}`}}'
     policies.yaml:
       apiVersion: 1
       policies:
