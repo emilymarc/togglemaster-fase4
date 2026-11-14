@@ -30,7 +30,7 @@ Ordem de uma sessão completa, do zero até os dashboards:
 1. **Credenciais:** inicie o lab do AWS Academy e copie as credenciais para o terminal (`aws configure` ou variáveis `AWS_*`).
 2. **Infraestrutura:** `cd infra && terraform init && terraform apply` (~15 min).
 3. **Acesso ao cluster:** `aws eks update-kubeconfig --region us-east-1 --name <cluster-name>`.
-4. **Secrets do cluster** (nunca vão para o Git): `togglemaster-secrets` (namespace `togglemaster`) e `newrelic-license` (namespace `observability`). Ver [Observabilidade](#observabilidade).
+4. **Secrets do cluster** (nunca vão para o Git): `togglemaster-secrets` (namespace `togglemaster`), `newrelic-license` e `grafana-alerting` (namespace `observability`). Ver [Observabilidade](#observabilidade).
 5. **GitOps:** `bash scripts/install-argocd.sh`. O ArgoCD instala os 5 serviços e toda a stack de observabilidade a partir de `gitops/`.
 6. **Explorar:** ArgoCD (`localhost:8080`), Grafana (`localhost:3000`) e New Relic (traces e service map). Comandos de acesso nas seções abaixo.
 7. **Encerrar:** `terraform destroy` e `bash scripts/check-orphans.sh`.
@@ -112,7 +112,9 @@ Fluxo de telemetria e resposta a incidentes:
 │   └── check-orphans.sh            # Procura recursos esquecidos após o destroy
 └── .github/workflows/
     ├── go-ci.yml · python-ci.yml   # Pipelines reutilizáveis
-    └── <svc>-service.yml           # Um gatilho por serviço
+    ├── <svc>-service.yml           # Um gatilho por serviço
+    ├── secret-scan.yml             # Varredura de segredos (Trivy) no repositório inteiro
+    └── self-healing.yml            # Resposta automática a incidentes (repository_dispatch)
 ```
 
 ---
@@ -228,6 +230,28 @@ As variáveis `OTEL_SERVICE_NAME` e `OTEL_EXPORTER_OTLP_ENDPOINT` ficam nos `dep
 kubectl -n observability get secret kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d && echo
 kubectl -n observability port-forward svc/kube-prometheus-stack-grafana 3000:80   # http://localhost:3000 (admin)
 ```
+
+### Alertas e self-healing
+
+As regras, os contact points e a política de notificação ficam nos values do Grafana (`grafana.alerting`), versionados como o resto da plataforma.
+
+| Peça | Configuração |
+|---|---|
+| Regra | `auth-service: erros 5xx acima de 5%`, avaliada a cada 1 min, dispara após 2 min acima do limite |
+| Contact point `togglemaster-oncall` | PagerDuty (Events API v2), Discord (`#alertas`) e webhook para a API do GitHub |
+| Self-healing | `.github/workflows/self-healing.yml`: recebe o `repository_dispatch` (`grafana-alert`), conecta ao EKS e executa `kubectl rollout restart` no deployment da label `service` do alerta |
+
+As chaves dos três destinos ficam num Secret, lido pelo Grafana como variáveis de ambiente:
+
+```bash
+kubectl -n observability create secret generic grafana-alerting \
+  --from-literal=PAGERDUTY_INTEGRATION_KEY='<integration key do PagerDuty>' \
+  --from-literal=DISCORD_WEBHOOK_URL='<URL do webhook do Discord>' \
+  --from-literal=GITHUB_DISPATCH_TOKEN='<fine-grained token: Contents read/write neste repositório>'
+kubectl -n observability rollout restart deployment kube-prometheus-stack-grafana
+```
+
+O workflow usa as credenciais do environment `aws academy`: renove-as com `bash scripts/set-github-secrets.sh` a cada sessão. Para testar sem esperar o alerta: aba **Actions → self-healing → Run workflow**.
 
 ---
 
