@@ -27,13 +27,15 @@ ToggleMaster é uma plataforma de **feature flags** com 5 microsserviços, impla
 
 Ordem de uma sessão completa, do zero até os dashboards:
 
-1. **Credenciais:** inicie o lab do AWS Academy e copie as credenciais para o terminal (`aws configure` ou variáveis `AWS_*`).
-2. **Infraestrutura:** `cd infra && terraform init && terraform apply` (~15 min).
-3. **Acesso ao cluster:** `aws eks update-kubeconfig --region us-east-1 --name <cluster-name>`.
-4. **Secrets do cluster** (nunca vão para o Git): `togglemaster-secrets` (namespace `togglemaster`), `newrelic-license` e `grafana-alerting` (namespace `observability`). Ver [Observabilidade](#observabilidade).
-5. **GitOps:** `bash scripts/install-argocd.sh`. O ArgoCD instala os 5 serviços e toda a stack de observabilidade a partir de `gitops/`.
-6. **Explorar:** ArgoCD (`localhost:8080`), Grafana (`localhost:3000`) e New Relic (traces e service map). Comandos de acesso nas seções abaixo.
-7. **Encerrar:** `terraform destroy` e `bash scripts/check-orphans.sh`.
+1. **Credenciais:** inicie o lab do AWS Academy, copie as credenciais para o terminal (`aws configure` ou variáveis `AWS_*`) e atualize os secrets do environment `aws academy` no GitHub.
+2. **Infraestrutura:** `cd infra && terraform init && terraform apply` (~20 min).
+3. **Acesso ao cluster:** `aws eks update-kubeconfig --region us-east-1 --name togglemaster-cluster`.
+4. **Imagens:** aba **Actions → build-images → Run workflow**. Constrói as 5 imagens, publica no ECR e grava as tags em `gitops/`.
+5. **Bancos e Secrets** (nunca vão para o Git): tabelas de `services/*/db/init.sql`; `togglemaster-secrets` (namespace `togglemaster`), `newrelic-license` e `grafana-alerting` (namespace `observability`). Ver [Observabilidade](#observabilidade).
+6. **GitOps:** `bash scripts/install-argocd.sh`. O ArgoCD instala os 5 serviços e toda a stack de observabilidade a partir de `gitops/`.
+7. **Chave de serviço:** crie uma chave no auth (`POST /admin/keys` com a `MASTER_KEY`) e grave-a como `SERVICE_API_KEY` no `togglemaster-secrets`.
+8. **Explorar:** ArgoCD (`localhost:8080`), Grafana (`localhost:3000`) e New Relic (traces e service map). Comandos de acesso nas seções abaixo.
+9. **Encerrar:** `terraform destroy` e confira se não sobraram volumes EBS, load balancers ou NAT gateways.
 
 ---
 
@@ -106,14 +108,12 @@ Fluxo de telemetria e resposta a incidentes:
 │   ├── platform/dashboards/        # Dashboards do Grafana como ConfigMap
 │   └── services/<svc>/deployment.yaml
 ├── scripts/
-│   ├── install-argocd.sh           # Instala o ArgoCD (versão fixa) e aplica a root app
-│   ├── set-github-secrets.sh       # Copia as credenciais do Academy para o environment "aws academy"
-│   ├── verify.sh                   # Confere os recursos criados na AWS
-│   └── check-orphans.sh            # Procura recursos esquecidos após o destroy
+│   └── install-argocd.sh           # Instala o ArgoCD (versão fixa) e aplica a root app
 └── .github/workflows/
     ├── go-ci.yml · python-ci.yml   # Pipelines reutilizáveis
     ├── <svc>-service.yml           # Um gatilho por serviço
     ├── secret-scan.yml             # Varredura de segredos (Trivy) no repositório inteiro
+    ├── build-images.yml            # Publica as 5 imagens no ECR no início de cada sessão (manual)
     └── self-healing.yml            # Resposta automática a incidentes (repository_dispatch)
 ```
 
@@ -136,10 +136,9 @@ terraform apply      # ~15 min
 
 ```bash
 terraform destroy
-bash scripts/check-orphans.sh
 ```
 
-**Driver EBS CSI:** o módulo `eks` instala o addon `aws-ebs-csi-driver`, que cria os discos pedidos pelos volumes do Kubernetes (ex.: Loki). Esses discos são criados pelo Kubernetes, não pelo Terraform: o `check-orphans.sh` aponta os que sobrarem após o `destroy`.
+**Driver EBS CSI:** o módulo `eks` instala o addon `aws-ebs-csi-driver`, que cria os discos pedidos pelos volumes do Kubernetes (ex.: Loki). Esses discos são criados pelo Kubernetes, não pelo Terraform: confira no console (EC2 → Volumes, status *available*) se algum sobrou após o `destroy`.
 
 ---
 
@@ -156,7 +155,7 @@ lint ──────────┘    Trivy SCA + gosec/bandit   Trivy image
 
 **Permissões do `GITHUB_TOKEN`:** o pipeline reutilizável roda com `contents: read` por padrão. Só o job `docker-build-push`, que commita a nova tag, pede `contents: write`, e quem chama concede essa permissão explicitamente.
 
-**Secrets necessários** (*Settings → Secrets → Actions*): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. As credenciais do Academy expiram a cada sessão; para renová-las, rode `bash scripts/set-github-secrets.sh`.
+**Secrets necessários** (*Settings → Secrets → Actions*): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`. As credenciais do Academy expiram a cada sessão: atualize esses três secrets no início de cada uma.
 
 | Ferramenta | Tipo | Serviços |
 |------------|------|----------|
@@ -251,7 +250,7 @@ kubectl -n observability create secret generic grafana-alerting \
 kubectl -n observability rollout restart deployment kube-prometheus-stack-grafana
 ```
 
-O workflow usa as credenciais do environment `aws academy`: renove-as com `bash scripts/set-github-secrets.sh` a cada sessão. Para testar sem esperar o alerta: aba **Actions → self-healing → Run workflow**.
+O workflow usa as credenciais do environment `aws academy`, que precisam ser atualizadas a cada sessão. Para testar sem esperar o alerta: aba **Actions → self-healing → Run workflow**.
 
 ---
 
