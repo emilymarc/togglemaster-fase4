@@ -1,0 +1,59 @@
+# como ler: execução manual [workflow_dispatch] no início de cada sessão no EKS. Constrói as 5 imagens em paralelo [matrix], publica no ECR recém-criado e grava as novas tags em gitops/ num único commit; o ArgoCD aplica sozinho
+name: build-images
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: aws academy
+    strategy:
+      matrix:
+        service: [auth, flag, targeting, evaluation, analytics]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Login no ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build e push
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          SERVICE: ${{ matrix.service }}
+        run: |
+          IMAGE="$REGISTRY/togglemaster-$SERVICE:${GITHUB_SHA::7}"
+          docker build -t "$IMAGE" "services/$SERVICE"
+          docker push "$IMAGE"
+
+  update-gitops:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Atualizar as tags no GitOps
+        run: |
+          for s in auth flag targeting evaluation analytics; do
+            sed -i -E "s|(image: .*togglemaster-$s):.*|\1:${GITHUB_SHA::7}|" "gitops/services/$s/deployment.yaml"
+          done
+
+      - name: Commitar e subir a mudança
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "deploy: all services -> ${{ github.sha }} [skip ci]"
+          file_pattern: gitops/services/*/deployment.yaml
