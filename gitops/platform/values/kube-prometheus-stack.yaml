@@ -98,6 +98,6 @@ grafana:
                 severity: critical
                 service: auth
               annotations:
-                # {{` `}} impede o Helm de ler o template; $$ impede o Grafana de trocar $values por variável de ambiente
-                summary: '{{`{{ printf "%.1f" $$values.taxa_5xx.Value }}`}}% de respostas 5xx no auth-service'
+                # {{` `}} impede o Helm de ler o template, que é do Grafana
+                summary: '{{`{{ printf "%.1f" $values.taxa_5xx.Value }}`}}% de respostas 5xx no auth-service'
                 description: "Mais de 5% das requisições do auth-service retornaram erro 5xx nos últimos 5 minutos."
