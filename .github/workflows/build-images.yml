@@ -37,19 +37,33 @@ jobs:
           IMAGE="$REGISTRY/togglemaster-$SERVICE:${GITHUB_SHA::7}"
           docker build -t "$IMAGE" "services/$SERVICE"
           docker push "$IMAGE"
-
   update-gitops:
     needs: build
     runs-on: ubuntu-latest
+    environment: aws academy
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Atualizar as tags no GitOps
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Login no ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Atualizar as imagens no GitOps
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           for s in auth flag targeting evaluation analytics; do
-            sed -i -E "s|(image: .*togglemaster-$s):.*|\1:${GITHUB_SHA::7}|" "gitops/services/$s/deployment.yaml"
+            sed -i -E "s|image: .*togglemaster-$s:.*|image: $REGISTRY/togglemaster-$s:${GITHUB_SHA::7}|" "gitops/services/$s/deployment.yaml"
           done
 
       - name: Commitar e subir a mudança
