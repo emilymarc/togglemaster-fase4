@@ -46,6 +46,9 @@ Thumbs.db
 # Logs
 *.log
 
+# scripts locais de apoio (só install-argocd.sh faz parte do repositório)
+scripts/*
+!scripts/install-argocd.sh
+
 # others
-scripts/
 *.exe
