@@ -246,7 +246,7 @@ data:
           },
           "targets": [
             {
-              "expr": "100 * (sum(rate(http_server_request_duration_seconds_count{job=\"auth-service\", http_response_status_code=~\"5..\"}[5m])) or sum(rate(http_server_duration_milliseconds_count{job=\"auth-service\", http_status_code=~\"5..\"}[5m]))) / (sum(rate(http_server_request_duration_seconds_count{job=\"auth-service\"}[5m])) or sum(rate(http_server_duration_milliseconds_count{job=\"auth-service\"}[5m])))",
+              "expr": "100 * (sum(rate(http_server_request_duration_seconds_count{job=~\".*auth-service\", http_response_status_code=~\"5..\"}[5m])) or sum(rate(http_server_duration_milliseconds_count{job=~\".*auth-service\", http_status_code=~\"5..\"}[5m]))) / (sum(rate(http_server_request_duration_seconds_count{job=~\".*auth-service\"}[5m])) or sum(rate(http_server_duration_milliseconds_count{job=~\".*auth-service\"}[5m])))",
               "refId": "A",
               "datasource": {
                 "type": "prometheus",
