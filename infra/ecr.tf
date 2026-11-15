@@ -3,6 +3,7 @@ resource "aws_ecr_repository" "services" {
 
   name                 = "${var.project_name}-${each.key}"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true # o destroy apaga o repositório mesmo com imagens dentro
 
   image_scanning_configuration {
     scan_on_push = true
