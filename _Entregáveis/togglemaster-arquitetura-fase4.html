@@ -414,37 +414,11 @@
     flex-shrink: 0;
   }
 
-  /* ─── Fase 4: status e observabilidade ─── */
-  .status-line {
-    margin-top: 10px;
-    display: flex;
-    gap: 14px;
-    justify-content: center;
-    flex-wrap: wrap;
-    font-size: 0.66rem;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--muted);
-  }
-  .status-chip { display: inline-flex; align-items: center; gap: 6px; }
-  .status-chip .sw { width: 14px; height: 10px; border-radius: 2px; border: 1.5px solid var(--muted); }
-  .status-chip .sw.planned { border-style: dashed; }
-
-  .planned { border-style: dashed !important; }
-  .new-tag {
-    font-size: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--green);
-    border: 1px solid rgba(74,222,128,0.35);
-    border-radius: 3px;
-    padding: 0 4px;
-    margin-left: 4px;
-    vertical-align: middle;
-    letter-spacing: 0.04em;
-  }
+  /* ─── Observabilidade ─── */
   .pod-otel { font-size: 0.52rem; color: var(--teal); font-family: 'JetBrains Mono', monospace; }
 
   .ns-obs {
-    border: 1px dashed rgba(86,212,221,0.45);
+    border: 1px solid rgba(86,212,221,0.45);
     border-radius: 5px;
     padding: 7px;
     background: rgba(86,212,221,0.04);
@@ -495,47 +469,9 @@
   }
   .obs-note b { color: var(--text); font-weight: 600; display: block; margin-bottom: 3px; font-family: 'Inter', sans-serif; font-size: 0.66rem; }
 
-  /* ─── Status e checklist ─── */
-  .status-section { width: 100%; max-width: 940px; margin-top: 22px; }
-  .status-header {
-    text-align: center; padding: 8px 12px 12px; font-size: 0.7rem; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase; border-radius: 6px 6px 0 0;
-    border: 1px solid rgba(74,222,128,0.3); border-bottom: none;
-    background: rgba(74,222,128,0.08); color: var(--green);
-  }
-  .status-body {
-    border: 1px solid rgba(74,222,128,0.3); border-radius: 0 0 8px 8px; background: var(--surface);
-    padding: 12px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px;
-  }
-  .status-body h3 { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .st-table { width: 100%; border-collapse: collapse; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; }
-  .st-table td { padding: 5px 6px; border-top: 1px solid var(--border); vertical-align: top; color: var(--muted); }
-  .st-table td:first-child { color: var(--text); }
-  .st { white-space: nowrap; font-weight: 600; }
-  .st.ok { color: var(--green); } .st.wip { color: var(--yellow); } .st.todo { color: var(--muted); } .st.hold { color: var(--orange); }
-  .check { list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
-  .check li::before { content: '☐ '; color: var(--muted); }
-  .check li.done { color: var(--text); }
-  .check li.done::before { content: '☑ '; color: var(--green); }
-  .check .grp { color: var(--text); font-family: 'Inter', sans-serif; font-weight: 600; margin-top: 6px; }
-  .check .grp::before { content: ''; }
-
-  /* progresso até a entrega */
-  .prog { grid-column: 1 / -1; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-  .prog-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
-  .prog-count { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text); }
-  .prog-count b { color: var(--green); font-size: 0.9rem; }
-  .prog-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-bottom: 10px; }
-  .prog-bar span { display: block; height: 100%; background: var(--green); }
-  .prog-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
-  .prog .check { counter-reset: none; }
-  .check li.next { color: var(--yellow); }
-  .check li.next::before { content: '▶ '; color: var(--yellow); }
 
   @media (max-width: 760px) {
-    .prog-cols { grid-template-columns: 1fr; }
     .obs-notes { grid-template-columns: 1fr; }
-    .status-body { grid-template-columns: 1fr; }
     .diagram {
       grid-template-columns: 1fr;
       grid-template-rows: auto;
@@ -547,11 +483,6 @@
 <header>
   <h1>ToggleMaster — Arquitetura Fase 4</h1>
   <p>IaC · CI/CD · GitOps · Observabilidade (OTel) · Alertas · Self-Healing</p>
-  <div class="status-line">
-    <span class="status-chip"><span class="sw"></span>implementado</span>
-    <span class="status-chip"><span class="new-tag">FASE 4</span>novo nesta fase</span>
-    <span>atualizado em 15/11/2026</span>
-  </div>
 </header>
 
 <div class="diagram">
@@ -569,7 +500,7 @@
         </div>
         <div class="item-list">
           <div class="item"><span class="icon">🗄</span><div><span class="label">S3</span> <span class="sub">tfstate bucket</span></div></div>
-          <div class="item"><span class="icon">🔒</span><div><span class="label">DynamoDB</span> <span class="sub">state lock</span></div></div>
+          <div class="item"><span class="icon">🔒</span><div><span class="label">use_lockfile</span> <span class="sub">lock nativo no S3</span></div></div>
         </div>
       </div>
 
@@ -582,7 +513,7 @@
         <div class="item-list">
           <div class="item"><span class="icon">🌐</span><div><span class="label">networking</span><br><span class="sub">VPC · subnets · SGs</span></div></div>
           <div class="item"><span class="icon">☸</span><div><span class="label">eks</span><br><span class="sub">cluster · node group 3 × t3.medium (LabRole, IMDSv2 hop limit 2) · addon EBS CSI</span></div></div>
-          <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><span class="new-tag">FASE 4</span><br><span class="sub">scripts/install-argocd.sh (v3.5.6)</span></div></div>
+          <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><br><span class="sub">scripts/install-argocd.sh (v3.5.6)</span></div></div>
           <div class="item"><span class="icon">🐘</span><div><span class="label">rds</span><br><span class="sub">PostgreSQL × 3</span></div></div>
           <div class="item"><span class="icon">⚡</span><div><span class="label">elasticache</span><br><span class="sub">Redis</span></div></div>
           <div class="item"><span class="icon">📋</span><div><span class="label">dynamo_sqs</span><br><span class="sub">DynamoDB + SQS</span></div></div>
@@ -638,9 +569,9 @@
 
         <div class="pipe-arrow">↓</div>
 
-        <!-- Secret scan (Fase 4) -->
+        <!-- Secret scan -->
         <div class="pipe-step security">
-          <div class="pipe-label security-lbl">🔑 secret-scan (repo inteiro)<span class="new-tag">FASE 4</span></div>
+          <div class="pipe-label security-lbl">🔑 secret-scan (repo inteiro)</div>
           <div class="pipe-detail">
             workflow próprio · todo push/PR<br>
             Trivy secret + regras NR · PD · Discord<br>
@@ -694,7 +625,8 @@
           <div class="pipe-detail">
             docker build → Trivy image scan<br>
             tag: SHA[:7] → ECR push<br>
-            <span style="color:var(--muted)">permissions: contents: write</span>
+            <span style="color:var(--muted)">permissions: contents: write</span><br>
+            <span style="color:var(--muted)">build-images (manual): as 5 imagens de uma vez</span>
           </div>
         </div>
 
@@ -712,9 +644,9 @@
 
         <div class="pipe-arrow">↓</div>
 
-        <!-- App-of-apps (Fase 4) -->
+        <!-- App-of-apps -->
         <div class="pipe-step gitops">
-          <div class="pipe-label gitops-lbl">🌳 root-app (app-of-apps)<span class="new-tag">FASE 4</span></div>
+          <div class="pipe-label gitops-lbl">🌳 root-app (app-of-apps)</div>
           <div class="pipe-detail">
             gitops/apps/ → services + plataforma<br>
             Helm: kube-prometheus-stack · loki<br>
@@ -780,7 +712,7 @@
             <div class="pod go">
               <div class="pod-name">auth-service</div>
               <div class="pod-lang">Go</div>
-              <div class="pod-otel">+ otelhttp · /chaos</div>
+              <div class="pod-otel">+ OTel SDK · otelhttp</div>
             </div>
             <div class="pod py">
               <div class="pod-name">flag-service</div>
@@ -795,7 +727,7 @@
             <div class="pod go">
               <div class="pod-name">evaluation-svc</div>
               <div class="pod-lang">Go</div>
-              <div class="pod-otel">+ otelhttp · redisotel</div>
+              <div class="pod-otel">+ OTel SDK · otelhttp · producer SQS</div>
             </div>
             <div class="pod py" style="grid-column: 1 / -1;">
               <div class="pod-name">analytics-service</div>
@@ -806,7 +738,7 @@
         </div>
 
         <div class="ns-obs">
-          <div class="eks-header">📈 namespace: observability<span class="new-tag">FASE 4</span></div>
+          <div class="eks-header">📈 namespace: observability</div>
           <div class="pods-grid">
             <div class="pod" style="grid-column: 1 / -1; border-color: rgba(86,212,221,0.45);">
               <div class="pod-name">otel-collector</div>
@@ -859,9 +791,9 @@
 
 </div>
 
-<!-- ══════════════ FASE 4: OBSERVABILIDADE ══════════════ -->
+<!-- ══════════════ OBSERVABILIDADE ══════════════ -->
 <section class="obs-section">
-  <div class="obs-header">◎ Observabilidade &amp; Resposta a Incidentes <span class="new-tag">FASE 4</span></div>
+  <div class="obs-header">◎ Observabilidade &amp; Resposta a Incidentes </div>
   <div class="obs-body">
     <svg viewBox="0 0 940 340" role="img" aria-label="Fluxo de telemetria pelo OTel Collector e ciclo de alerta com self-healing" font-family="Inter, sans-serif">
       <defs>
@@ -956,88 +888,12 @@
     <div class="obs-notes">
       <div class="obs-note"><b>Roteamento OTel</b>Os serviços só conhecem o Collector. Métricas → Prometheus, logs → Loki, traces → New Relic. Trocar de backend é mudar o exporter, não o código.</div>
       <div class="obs-note"><b>Alerta → ação</b>Uma regra do Grafana abre o incidente no PagerDuty, notifica o Discord e dispara uma GitHub Action (repository_dispatch), que reinicia o deployment sem intervenção humana.</div>
-      <div class="obs-note"><b>Custo zero</b>Stack open source no cluster. New Relic, PagerDuty e Discord nos planos gratuitos. EKS só nas sessões de integração e gravação (crédito Academy).</div>
+      <div class="obs-note"><b>Custo zero</b>Stack open source no cluster. New Relic, PagerDuty e Discord nos planos gratuitos. O ambiente AWS é criado e destruído pelo Terraform sob demanda.</div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════ STATUS E CHECKLIST ══════════════ -->
-<section class="status-section">
-  <div class="status-header">☑ Status e checklist da Fase 4</div>
-  <div class="status-body">
-    <div class="prog">
-      <div class="prog-top">
-        <h3 style="margin:0">Progresso até a entrega</h3>
-        <span class="prog-count"><b>18</b> de 20 passos concluídos · faltam 2 (90%)</span>
-      </div>
-      <div class="prog-bar"><span style="width:90%"></span></div>
-      <div class="prog-cols">
-        <ul class="check">
-          <li class="done">01 · Repositório da Fase 4 a partir da Fase 3</li>
-          <li class="done">02 · CI no repositório novo (permissões, gosec, environment secrets)</li>
-          <li class="done">03 · Varredura de segredos com Trivy (CI + hook local)</li>
-          <li class="done">04 · Contas New Relic e Discord</li>
-          <li class="done">05 · ArgoCD com app-of-apps (GitOps da plataforma)</li>
-          <li class="done">06 · Req. 1 · Helm: Prometheus, Grafana, Loki + StorageClass EBS</li>
-          <li class="done">07 · Req. 2 · Helm: OTel Collector (DaemonSet)</li>
-          <li class="done">08 · Req. 3 · Instrumentação Python (flag, targeting, analytics)</li>
-          <li class="done">09 · Req. 3 · Instrumentação Go (auth, evaluation) · PR #7</li>
-          <li class="done">10 · Req. 3 · Trace propagado pelo SQS · PR #8</li>
-        </ul>
-        <ul class="check">
-          <li class="done">11 · Atualizar README e caderno com o Req. 3</li>
-          <li class="done">12 · Conta PagerDuty (Events API v2) e webhook do Discord</li>
-          <li class="done">13 · Req. 1 · Dashboard do Grafana versionado (ConfigMap)</li>
-          <li class="done">14 · Req. 4 · Regra de alerta: 5xx do auth &gt; 5%</li>
-          <li class="done">15 · Req. 4 · Contact points: PagerDuty e Discord, com política de notificação</li>
-          <li class="done">16 · Req. 4 · GitHub Action de self-healing (repository_dispatch)</li>
-          <li class="done">17 · Integração no EKS: subir, criar Secrets, validar e corrigir</li>
-          <li class="done">18 · Gravação do vídeo no EKS</li>
-          <li class="next">19 · Relatório: RMs, usernames, link do vídeo, prints → PDF</li>
-          <li>20 · Entrega final e terraform destroy (sem volumes órfãos)</li>
-        </ul>
-      </div>
-    </div>
-    <div>
-      <h3>Etapas do plano</h3>
-      <table class="st-table">
-        <tr><td>0 · Repositório da Fase 4 a partir da Fase 3</td><td class="st ok">concluído</td></tr>
-        <tr><td>CI no repositório novo (GITHUB_TOKEN, gosec travado, environment "aws academy")</td><td class="st ok">concluído</td></tr>
-        <tr><td>1 · Contas gratuitas: New Relic, Discord (webhook #alertas), PagerDuty (Events API v2)</td><td class="st ok">concluído</td></tr>
-        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD v3.5.6 fixo</td><td class="st ok">concluído</td></tr>
-        <tr><td>3 · Laboratório local de observabilidade (substituído pela validação com helm template)</td><td class="st todo">dispensado</td></tr>
-        <tr><td>4 · Instrumentação OpenTelemetry dos 5 serviços (Python, Go e SQS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>5a · Dashboard do Grafana como código (ConfigMap + sidecar)</td><td class="st ok">concluído</td></tr>
-        <tr><td>5b · Regra de alerta 5xx do auth e contact points</td><td class="st ok">concluído</td></tr>
-        <tr><td>6 · Self-healing: GitHub Action via repository_dispatch</td><td class="st ok">concluído</td></tr>
-        <tr><td>7a · Helm no GitOps: Prometheus, Grafana, Loki + StorageClass (requisito 1)</td><td class="st ok">concluído</td></tr>
-        <tr><td>7b · Helm no GitOps: OTel Collector (requisito 2)</td><td class="st ok">concluído</td></tr>
-        <tr><td>8–9 · Sessões no EKS: integração e gravação</td><td class="st ok">concluído</td></tr>
-        <tr><td>Varredura de segredos (Trivy, repo inteiro + hook local)</td><td class="st ok">concluído</td></tr>
-      </table>
-    </div>
-    <div>
-      <h3>Entregáveis do enunciado</h3>
-      <ul class="check">
-        <li class="grp">Código no repositório</li>
-        <li class="done">IaC/GitOps com a stack de monitoramento e o OTel Collector</li>
-        <li class="done">Código das aplicações instrumentado</li>
-        <li class="done">Scripts/automações do self-healing</li>
-        <li class="grp">Vídeo (até 25 min)</li>
-        <li class="done">EKS e ArgoCD rodando com a nova stack</li>
-        <li class="done">Grafana: dashboard, busca no Loki, roteamento do OTel</li>
-        <li class="done">APM: service map e trace distribuído</li>
-        <li class="done">Prova real: falha → alerta → PagerDuty + Discord → self-healing</li>
-        <li class="grp">Relatório (PDF)</li>
-        <li>Nomes, RMs e usernames</li>
-        <li class="done">Link do repositório</li>
-        <li>Link do vídeo</li>
-        <li>Prints: dashboard, trace, notificação, self-healing</li>
-        <li class="done">Justificativa técnica (OTel, New Relic, PagerDuty)</li>
-      </ul>
-    </div>
-  </div>
-</section>
+
 
 <!-- Legend -->
 <footer>
