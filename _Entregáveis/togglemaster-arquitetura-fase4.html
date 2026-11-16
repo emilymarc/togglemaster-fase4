@@ -549,9 +549,8 @@
   <p>IaC · CI/CD · GitOps · Observabilidade (OTel) · Alertas · Self-Healing</p>
   <div class="status-line">
     <span class="status-chip"><span class="sw"></span>implementado</span>
-    <span class="status-chip"><span class="sw planned"></span>planejado / em andamento</span>
     <span class="status-chip"><span class="new-tag">FASE 4</span>novo nesta fase</span>
-    <span>atualizado em 12/11/2026</span>
+    <span>atualizado em 15/11/2026</span>
   </div>
 </header>
 
@@ -582,7 +581,7 @@
         </div>
         <div class="item-list">
           <div class="item"><span class="icon">🌐</span><div><span class="label">networking</span><br><span class="sub">VPC · subnets · SGs</span></div></div>
-          <div class="item"><span class="icon">☸</span><div><span class="label">eks</span><br><span class="sub">cluster · node group 3 × t3.medium · addon EBS CSI</span></div></div>
+          <div class="item"><span class="icon">☸</span><div><span class="label">eks</span><br><span class="sub">cluster · node group 3 × t3.medium (LabRole, IMDSv2 hop limit 2) · addon EBS CSI</span></div></div>
           <div class="item"><span class="icon">⎈</span><div><span class="label">argocd</span><span class="new-tag">FASE 4</span><br><span class="sub">scripts/install-argocd.sh (v3.5.6)</span></div></div>
           <div class="item"><span class="icon">🐘</span><div><span class="label">rds</span><br><span class="sub">PostgreSQL × 3</span></div></div>
           <div class="item"><span class="icon">⚡</span><div><span class="label">elasticache</span><br><span class="sub">Redis</span></div></div>
@@ -714,7 +713,7 @@
         <div class="pipe-arrow">↓</div>
 
         <!-- App-of-apps (Fase 4) -->
-        <div class="pipe-step gitops planned">
+        <div class="pipe-step gitops">
           <div class="pipe-label gitops-lbl">🌳 root-app (app-of-apps)<span class="new-tag">FASE 4</span></div>
           <div class="pipe-detail">
             gitops/apps/ → services + plataforma<br>
@@ -809,19 +808,19 @@
         <div class="ns-obs">
           <div class="eks-header">📈 namespace: observability<span class="new-tag">FASE 4</span></div>
           <div class="pods-grid">
-            <div class="pod planned" style="grid-column: 1 / -1; border-color: rgba(86,212,221,0.45);">
+            <div class="pod" style="grid-column: 1 / -1; border-color: rgba(86,212,221,0.45);">
               <div class="pod-name">otel-collector</div>
               <div class="pod-lang">DaemonSet · otlp + filelog</div>
             </div>
-            <div class="pod planned">
+            <div class="pod">
               <div class="pod-name">prometheus</div>
               <div class="pod-lang">métricas</div>
             </div>
-            <div class="pod planned">
+            <div class="pod">
               <div class="pod-name">loki</div>
               <div class="pod-lang">logs</div>
             </div>
-            <div class="pod planned" style="grid-column: 1 / -1;">
+            <div class="pod" style="grid-column: 1 / -1;">
               <div class="pod-name">grafana</div>
               <div class="pod-lang">dashboard · alertas</div>
             </div>
@@ -897,7 +896,7 @@
       </g>
 
       <!-- microsserviços -->
-      <rect x="16" y="30" width="180" height="170" rx="8" fill="#1C2128" stroke="#F9CA6A" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="16" y="30" width="180" height="170" rx="8" fill="#1C2128" stroke="#F9CA6A" stroke-width="1.25"/>
       <text x="32" y="56" font-size="13" font-weight="600" fill="#E6EDF3">Microsserviços (5)</text>
       <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8B949E">
         <text x="32" y="80">ns togglemaster</text>
@@ -908,7 +907,7 @@
       </g>
 
       <!-- collector -->
-      <rect x="262" y="30" width="190" height="170" rx="8" fill="rgba(86,212,221,0.08)" stroke="#56D4DD" stroke-width="2" stroke-dasharray="5 4"/>
+      <rect x="262" y="30" width="190" height="170" rx="8" fill="rgba(86,212,221,0.08)" stroke="#56D4DD" stroke-width="2"/>
       <text x="278" y="56" font-size="13" font-weight="600" fill="#E6EDF3">OTel Collector</text>
       <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="#8B949E">
         <text x="278" y="80">DaemonSet</text>
@@ -919,20 +918,20 @@
       </g>
 
       <!-- backends -->
-      <rect x="520" y="20" width="180" height="52" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="520" y="20" width="180" height="52" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25"/>
       <text x="534" y="42" font-size="12.5" font-weight="600" fill="#E6EDF3">New Relic APM</text>
       <text x="534" y="60" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">traces · service map</text>
 
-      <rect x="520" y="88" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="520" y="88" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25"/>
       <text x="534" y="110" font-size="12.5" font-weight="600" fill="#E6EDF3">Prometheus</text>
       <text x="534" y="128" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">métricas apps + cluster</text>
 
-      <rect x="520" y="156" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="520" y="156" width="180" height="52" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25"/>
       <text x="534" y="178" font-size="12.5" font-weight="600" fill="#E6EDF3">Loki</text>
       <text x="534" y="196" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">logs de todos os pods</text>
 
       <!-- grafana -->
-      <rect x="760" y="88" width="164" height="86" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="760" y="88" width="164" height="86" rx="8" fill="#1C2128" stroke="#5B9CF6" stroke-width="1.25"/>
       <text x="774" y="110" font-size="12.5" font-weight="600" fill="#E6EDF3">Grafana</text>
       <g font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">
         <text x="774" y="128">dashboard + Alerting</text>
@@ -941,15 +940,15 @@
       </g>
 
       <!-- resposta -->
-      <rect x="262" y="262" width="190" height="56" rx="8" fill="rgba(255,123,114,0.08)" stroke="#FF7B72" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <rect x="262" y="262" width="190" height="56" rx="8" fill="rgba(255,123,114,0.08)" stroke="#FF7B72" stroke-width="1.5"/>
       <text x="278" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">GitHub Action</text>
       <text x="278" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">repository_dispatch</text>
 
-      <rect x="520" y="262" width="180" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="520" y="262" width="180" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25"/>
       <text x="534" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">PagerDuty</text>
       <text x="534" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">incidente · Events API v2</text>
 
-      <rect x="760" y="262" width="164" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <rect x="760" y="262" width="164" height="56" rx="8" fill="#1C2128" stroke="#F4845F" stroke-width="1.25"/>
       <text x="774" y="284" font-size="12.5" font-weight="600" fill="#E6EDF3">Discord</text>
       <text x="774" y="303" font-family="JetBrains Mono, monospace" font-size="10" fill="#8B949E">#alertas · webhook</text>
     </svg>
@@ -969,9 +968,9 @@
     <div class="prog">
       <div class="prog-top">
         <h3 style="margin:0">Progresso até a entrega</h3>
-        <span class="prog-count"><b>16</b> de 20 passos concluídos · faltam 4 (80%)</span>
+        <span class="prog-count"><b>18</b> de 20 passos concluídos · faltam 2 (90%)</span>
       </div>
-      <div class="prog-bar"><span style="width:80%"></span></div>
+      <div class="prog-bar"><span style="width:90%"></span></div>
       <div class="prog-cols">
         <ul class="check">
           <li class="done">01 · Repositório da Fase 4 a partir da Fase 3</li>
@@ -992,9 +991,9 @@
           <li class="done">14 · Req. 4 · Regra de alerta: 5xx do auth &gt; 5%</li>
           <li class="done">15 · Req. 4 · Contact points: PagerDuty e Discord, com política de notificação</li>
           <li class="done">16 · Req. 4 · GitHub Action de self-healing (repository_dispatch)</li>
-          <li class="next">17 · Sessão EKS 1: subir, criar Secrets, validar e corrigir</li>
-          <li>18 · Sessão EKS 2: gravar o vídeo e tirar os 4 prints</li>
-          <li>19 · Relatório: RMs, usernames, links, prints → PDF</li>
+          <li class="done">17 · Integração no EKS: subir, criar Secrets, validar e corrigir</li>
+          <li class="done">18 · Gravação do vídeo no EKS</li>
+          <li class="next">19 · Relatório: RMs, usernames, link do vídeo, prints → PDF</li>
           <li>20 · Entrega final e terraform destroy (sem volumes órfãos)</li>
         </ul>
       </div>
@@ -1005,15 +1004,15 @@
         <tr><td>0 · Repositório da Fase 4 a partir da Fase 3</td><td class="st ok">concluído</td></tr>
         <tr><td>CI no repositório novo (GITHUB_TOKEN, gosec travado, environment "aws academy")</td><td class="st ok">concluído</td></tr>
         <tr><td>1 · Contas gratuitas: New Relic, Discord (webhook #alertas), PagerDuty (Events API v2)</td><td class="st ok">concluído</td></tr>
-        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD v3.5.6 fixo (validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>3 · Laboratório local de observabilidade (docker-compose)</td><td class="st todo">a fazer</td></tr>
+        <tr><td>2 · GitOps da plataforma: app-of-apps e ArgoCD v3.5.6 fixo</td><td class="st ok">concluído</td></tr>
+        <tr><td>3 · Laboratório local de observabilidade (substituído pela validação com helm template)</td><td class="st todo">dispensado</td></tr>
         <tr><td>4 · Instrumentação OpenTelemetry dos 5 serviços (Python, Go e SQS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>5a · Dashboard do Grafana como código (ConfigMap + sidecar, validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>5b · Regra de alerta 5xx do auth e contact points (validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>6 · Self-healing: GitHub Action via repository_dispatch (validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>7a · Helm no GitOps: Prometheus, Grafana, Loki + StorageClass (requisito 1, validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>7b · Helm no GitOps: OTel Collector (requisito 2, validar no EKS)</td><td class="st ok">concluído</td></tr>
-        <tr><td>8–9 · Sessões no EKS: integração, gravação e prints</td><td class="st todo">a fazer</td></tr>
+        <tr><td>5a · Dashboard do Grafana como código (ConfigMap + sidecar)</td><td class="st ok">concluído</td></tr>
+        <tr><td>5b · Regra de alerta 5xx do auth e contact points</td><td class="st ok">concluído</td></tr>
+        <tr><td>6 · Self-healing: GitHub Action via repository_dispatch</td><td class="st ok">concluído</td></tr>
+        <tr><td>7a · Helm no GitOps: Prometheus, Grafana, Loki + StorageClass (requisito 1)</td><td class="st ok">concluído</td></tr>
+        <tr><td>7b · Helm no GitOps: OTel Collector (requisito 2)</td><td class="st ok">concluído</td></tr>
+        <tr><td>8–9 · Sessões no EKS: integração e gravação</td><td class="st ok">concluído</td></tr>
         <tr><td>Varredura de segredos (Trivy, repo inteiro + hook local)</td><td class="st ok">concluído</td></tr>
       </table>
     </div>
@@ -1025,10 +1024,10 @@
         <li class="done">Código das aplicações instrumentado</li>
         <li class="done">Scripts/automações do self-healing</li>
         <li class="grp">Vídeo (até 25 min)</li>
-        <li>EKS e ArgoCD rodando com a nova stack</li>
-        <li>Grafana: dashboard, busca no Loki, roteamento do OTel</li>
-        <li>APM: service map e trace distribuído</li>
-        <li>Prova real: falha → alerta → PagerDuty + Discord → self-healing</li>
+        <li class="done">EKS e ArgoCD rodando com a nova stack</li>
+        <li class="done">Grafana: dashboard, busca no Loki, roteamento do OTel</li>
+        <li class="done">APM: service map e trace distribuído</li>
+        <li class="done">Prova real: falha → alerta → PagerDuty + Discord → self-healing</li>
         <li class="grp">Relatório (PDF)</li>
         <li>Nomes, RMs e usernames</li>
         <li class="done">Link do repositório</li>

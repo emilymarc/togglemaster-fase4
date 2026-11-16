@@ -125,12 +125,12 @@ Fluxo de telemetria e resposta a incidentes:
 cd infra/
 terraform init
 terraform plan
-terraform apply      # ~15 min
+terraform apply      # ~20 min
 ```
 
-**AWS Academy:** o Terraform não pode criar IAM Roles; a `LabRole` é importada via data source e associada ao cluster e ao node group.
+**AWS Academy:** o Terraform não pode criar IAM Roles; a `LabRole` é importada via data source e associada ao cluster e ao node group (3 × `t3.medium`). Como não há IRSA, os pods que chamam a API da AWS (ex.: driver EBS CSI) usam a credencial do nó: o launch template define o IMDSv2 com `http_put_response_hop_limit = 2`. Em uma conta sem essa restrição, o correto seria um papel IAM por aplicação.
 
-**State remoto:** bucket S3 com lock nativo (`use_lockfile = true`). A Fase 4 usa a chave própria `togglemaster-fase4/terraform.tfstate`.
+**State remoto:** bucket S3 com lock nativo (`use_lockfile = true`), criado uma vez fora do Terraform e mantido entre as sessões. A Fase 4 usa a chave própria `togglemaster-fase4/terraform.tfstate`. Ao trocar de máquina ou de bucket, rode `terraform init -reconfigure`.
 
 **Custo:** o ambiente sobe só nas sessões de integração e gravação (crédito Academy de US$ 50, ~US$ 0,40/h). Toda sessão termina com:
 
@@ -196,7 +196,9 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443   # https://localhost:
 
 ### OpenTelemetry Collector (peça central)
 
-Os serviços enviam traces e métricas só para o Collector (`opentelemetry-collector.observability:4317`, OTLP gRPC). O Collector também lê os logs dos contêineres direto dos nós (preset `logsCollection`) e marca cada dado com namespace, pod e deployment (preset `kubernetesAttributes`).
+Os serviços enviam traces e métricas só para o Collector (Service `opentelemetry-collector.observability:4317`, OTLP gRPC; pods do DaemonSet `opentelemetry-collector-agent`). O Collector também lê os logs dos contêineres direto dos nós (preset `logsCollection`) e marca cada dado com namespace, pod e deployment (preset `kubernetesAttributes`).
+
+No Prometheus, o label `job` das métricas dos serviços segue o formato `<namespace>/<serviço>` (ex.: `togglemaster/auth-service`); por isso a regra de alerta e o dashboard usam `job=~".*auth-service"`.
 
 | Sinal | Destino | Exporter |
 |---|---|---|
